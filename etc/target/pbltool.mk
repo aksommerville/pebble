@@ -5,7 +5,7 @@ pbltool_OUTDIR:=out/pbltool
 
 pbltool_OPT_ENABLE+=fs image serial
 
-pbltool_CC+=$(patsubst %,-DUSE_%=1,$(pbltool_OPT_ENABLE))
+pbltool_CC+=$(patsubst %,-DUSE_%=1,$(pbltool_OPT_ENABLE)) -DPBL_SDK=\"$(abspath .)\"
 pbltool_SRCINCLUDE:=$(addprefix src/opt/,$(addsuffix /%,$(pbltool_OPT_ENABLE))) src/pbltool/%
 pbltool_SRCFILES:=$(filter $(pbltool_SRCINCLUDE),$(SRCFILES))
 pbltool_CFILES:=$(filter %.c,$(pbltool_SRCFILES))

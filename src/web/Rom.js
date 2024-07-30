@@ -83,6 +83,43 @@ export class Rom {
     return "";
   }
   
+  /* Given the text of a <pbl-rom> tag, convert to an ArrayBuffer we can use for general decoding.
+   * This is used in the bundled HTML case.
+   * I considered a tighter-packing format specific to this case, but meh. Just base64 the whole ROM.
+   */
+  static decodeRomText(src) {
+    // It's no problem to overshoot the length. The excess will be zeroes, ie EOF.
+    const limit = Math.ceil((src.length * 3) / 4);
+    const dst = new Uint8Array(limit);
+    let dstc=0, srcp=0;
+    const tmp = [0, 0, 0, 0];
+    let tmpc = 0;
+    for (; srcp<src.length; srcp++) {
+      const ch = src.charCodeAt(srcp);
+           if ((ch >= 0x41) && (ch <= 0x5a)) tmp[tmpc++] = ch - 0x41;
+      else if ((ch >= 0x61) && (ch <= 0x7a)) tmp[tmpc++] = ch - 0x61 + 26;
+      else if ((ch >= 0x30) && (ch <= 0x39)) tmp[tmpc++] = ch - 0x30 + 52;
+      else if (ch === 0x2b) tmp[tmpc++] = 62;
+      else if (ch === 0x2f) tmp[tmpc++] = 63;
+      else continue;
+      if (tmpc >= 4) {
+        tmpc = 0;
+        dst[dstc++] = (tmp[0] << 2) | (tmp[1] >> 4);
+        dst[dstc++] = (tmp[1] << 4) | (tmp[2] >> 2);
+        dst[dstc++] = (tmp[2] << 6) | tmp[3];
+      }
+    }
+    if (tmpc === 1) {
+      dst[dstc++] = tmp[0] << 2;
+    } else if (tmpc === 2) {
+      dst[dstc++] = (tmp[0] << 2) | (tmp[1] >> 4);
+    } else if (tmpc === 3) {
+      dst[dstc++] = (tmp[0] << 2) | (tmp[1] >> 4);
+      dst[dstc++] = (tmp[1] << 4) | (tmp[2] >> 2);
+    }
+    return dst.buffer;
+  }
+  
   /* Assert signature, populate (this.resv), validate metadata:1 and code:1.
    * Since we want to validate its structure anyway, we'll go ahead and decode metadata:1 all the way.
    */

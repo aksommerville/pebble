@@ -19,11 +19,26 @@ extern struct pbltool {
   int srcpathc,srcpatha;
   int raw; // unpack
   int recompile; // bundle
+  const char *template; // bundle, HTML
+  
+  // Transient state for javascript bundler, stashed here for expedience.
+  char **jsincludev;
+  int jsincludec,jsincludea;
 } pbltool;
 
 // Standard types only, or numeric.
 int pbltool_tid_eval(const char *src,int srcc);
 int pbltool_tid_repr(char *dst,int dsta,int tid);
+
+const char *pbltool_guess_mime_type(const void *src,int srcc,const char *path,int pathc);
+
+/* Interning returns:
+ *   <0 for real errors, rare.
+ *    0 if we already had it.
+ *   >0 if newly added.
+ */
+void pbltool_jsinclude_clear();
+int pbltool_jsinclude_intern(const char *path,int pathc);
 
 /* If content needs to change, these will replace (res->serial).
  * Uncompilers may amend (name,comment,format) to influence the output file name.

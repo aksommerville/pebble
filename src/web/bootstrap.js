@@ -34,13 +34,18 @@ function loadGame(serial) {
 }
 
 window.addEventListener("load", () => {
-  // Any synchronous startup errors, eg failures to decode the ROM, will throw in this block.
-  // Errors after startup do not participate. (TODO should they?)
-  fetch("/rom").then(rsp => {
-    if (rsp.status === 599) {
-      return rsp.text().then(displayMakeError);
-    } else {
-      return rsp.arrayBuffer().then(loadGame);
-    }
-  }).catch(displayGeneralError);
+  const romElement = document.querySelector("pbl-rom");
+  if (romElement) {
+    loadGame(romElement.innerHTML).catch(displayGeneralError);
+  } else {
+    // Any synchronous startup errors, eg failures to decode the ROM, will throw in this block.
+    // Errors after startup do not participate. (TODO should they?)
+    fetch("/rom").then(rsp => {
+      if (rsp.status === 599) {
+        return rsp.text().then(displayMakeError);
+      } else {
+        return rsp.arrayBuffer().then(loadGame);
+      }
+    }).catch(displayGeneralError);
+  }
 }, { once: true });

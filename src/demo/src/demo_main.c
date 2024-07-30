@@ -110,13 +110,13 @@ void *pbl_client_synth(int samplec) {
   return synthbuf;
 }
 
-void *memset(void *dst,int v,int c) {
+void *memset(void *dst,int v,unsigned long c) {
   uint8_t *dstp=dst;
   for (;c-->0;dstp++) *dstp=v;
   return dst;
 }
 
-void *memcpy(void *dst,const void *src,int c) {
+void *memcpy(void *dst,const void *src,unsigned long c) {
   uint8_t *dstp=dst;
   const uint8_t *srcp=src;
   for (;c-->0;dstp++,srcp++) *dstp=*srcp;

@@ -69,4 +69,13 @@ int pbltool_rom_validate(struct pbltool_rom *rom);
  */
 int pbltool_rom_encode(struct sr_encoder *dst,const struct pbltool_rom *rom);
 
+/* Conveniences for reading resources.
+ * Reading from meta here does not do any string lookups. (note that we're not aware of the language).
+ */
+int pbltool_rom_get(void *dstpp,const struct pbltool_rom *rom,int tid,int rid);
+int pbltool_rom_get_meta(void *dstpp,const struct pbltool_rom *rom,const char *k,int kc);
+int pbltool_rom_get_string(void *dstpp,const struct pbltool_rom *rom,int rid,int index); // Include language in (rid).
+void pbltool_rom_clear_resource(struct pbltool_rom *rom,int tid,int rid);
+int pbltool_rom_remove_meta(struct pbltool_rom *rom,const char *k,int kc); // Only if compiled.
+
 #endif

@@ -27,13 +27,27 @@ static void pbltool_help_unpack() {
 }
  
 static void pbltool_help_bundle() {
-  fprintf(stderr,"\nUsage: %s bundle -oEXE|HTML ROM [LIB|--recompile]\n\n",pbltool.exename);
+  fprintf(stderr,"\nUsage: %s bundle -oEXE|HTML ROM [LIB|--recompile] [--template=HTML]\n\n",pbltool.exename);
   fprintf(stderr,
     "Produce a self-contained executable or web app from a ROM file.\n"
-    "If output path ends '.html' or '.htm', we produce a web app.\n"
-    "If you provide LIB, it is a static library of native code which we'll use to create a true-native executable.\n"
-    "Or if --recompile, we will attempt to generate that code from ROM's code:1 resource.\n"
-    "With neither, we produce a fake-native executable with bundled WebAssembly runtime.\n"
+    "\n"
+    "For HTML output:\n"
+    "Output path must end '.html' or '.htm'.\n"
+    "You may supply a template. If not, we use {PEBBLE}/src/web/index.html.\n"
+    "Writing your own template is a big deal, it must contain the entire Pebble Runtime.\n"
+    "If the template contains <link rel=\"icon\"> with no 'href', we insert the ROM's iconImage# and remove it from the ROM.\n"
+    "Any other explicit favicon link is left in place. Beware that the ROM loader will replace favicon if iconImage# is present.\n"
+    "Include a <title> tag with dummy content, we'll replace with title@ from the ROM.\n"
+    "\n"
+    "Fake-native executables:\n"
+    "These will include a WebAssembly runtime, and run the ROM exactly as the external native loader does.\n"
+    "Do not provide LIB or --recompile.\n"
+    "\n"
+    "True-native executables:\n"
+    "These contain game code compiled for one specific architecture.\n"
+    "The ROM is embedded as in the fake-native case, but we remove its 'code' resource.\n"
+    "Best to compile the game yourself into a static library and supply that as LIB.\n"
+    "Alternately, with --recompile, we will try to turn the ROM's WebAssembly code into native code.\n"
     "\n"
   );
 }
@@ -63,7 +77,7 @@ void pbltool_print_usage(const char *topic) {
     "COMMAND:\n"
     "      pack -oROM [INPUT...]\n"
     "    unpack -oDIRECTORY ROM [--raw]\n"
-    "    bundle -oEXE|HTML ROM [LIB|--recompile]\n"
+    "    bundle -oEXE|HTML ROM [LIB|--recompile] [--template=HTML]\n"
     "  unbundle -oROM EXE|HTML\n"
     "      list ROM [-fFORMAT]\n"
     "\n"
@@ -126,6 +140,11 @@ static int pbltool_configure_kv(const char *k,int kc,const char *v,int vc) {
   
   if ((kc==9)&&!memcmp(k,"recompile",9)) {
     pbltool.recompile=vn;
+    return 0;
+  }
+  
+  if ((kc==8)&&!memcmp(k,"template",8)) {
+    pbltool.template=v;
     return 0;
   }
   

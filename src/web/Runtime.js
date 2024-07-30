@@ -11,6 +11,8 @@ import * as util from "./util.js";
  
 export class Runtime {
   constructor(element, serial) {
+    if (typeof(serial) === "string") serial = Rom.decodeRomText(serial);
+    if (!(serial instanceof ArrayBuffer)) throw new Error(`Expected ArrayBuffer`);
     this.element = element;
     this.serial = serial; // ArrayBuffer
     this.terminate = false;

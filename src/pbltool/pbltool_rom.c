@@ -544,3 +544,90 @@ int pbltool_rom_encode(struct sr_encoder *dst,const struct pbltool_rom *rom) {
   }
   return 0;
 }
+
+/* Conveniences for reading.
+ */
+ 
+int pbltool_rom_get(void *dstpp,const struct pbltool_rom *rom,int tid,int rid) {
+  int p=pbltool_rom_search(rom,tid,rid);
+  if (p<0) return 0;
+  *(void**)dstpp=rom->resv[p].serial;
+  return rom->resv[p].serialc;
+}
+
+int pbltool_rom_get_meta(void *dstpp,const struct pbltool_rom *rom,const char *k,int kc) {
+  if (!k) return 0;
+  if (kc<0) { kc=0; while (k[kc]) kc++; }
+  const uint8_t *src=0;
+  int srcc=pbltool_rom_get(&src,rom,PBL_TID_metadata,1);
+  if ((srcc<4)||memcmp(src,"\x00PM\xff",4)) return 0;
+  int srcp=4;
+  for (;;) {
+    if (srcp>=srcc) return 0;
+    int qkc=src[srcp++];
+    if (!qkc) return 0;
+    if (srcp>=srcc) return 0;
+    int vc=src[srcp++];
+    if (srcp>srcc-vc-qkc) return 0;
+    if ((qkc==kc)&&!memcmp(src+srcp,k,kc)) {
+      srcp+=qkc;
+      *(const void**)dstpp=src+srcp;
+      return vc;
+    }
+    srcp+=qkc+vc;
+  }
+}
+
+int pbltool_rom_get_string(void *dstpp,const struct pbltool_rom *rom,int rid,int index) {
+  if (index<0) return 0;
+  const uint8_t *src=0;
+  int srcc=pbltool_rom_get(&src,rom,PBL_TID_strings,rid);
+  if ((srcc<4)||memcmp(src,"\x00PS\xff",4)) return 0;
+  int srcp=4;
+  for (;;) {
+    if (srcp>srcc-2) return 0;
+    int len=(src[srcp]<<8)|src[srcp+1];
+    srcp+=2;
+    if (srcp>srcc-len) return 0;
+    if (!index--) {
+      *(const void**)dstpp=src+srcp;
+      return len;
+    }
+    srcp+=len;
+  }
+}
+
+void pbltool_rom_clear_resource(struct pbltool_rom *rom,int tid,int rid) {
+  int p=pbltool_rom_search(rom,tid,rid);
+  if (p>=0) rom->resv[p].serialc=0;
+}
+
+/* Remove a field from metadata:1.
+ */
+ 
+int pbltool_rom_remove_meta(struct pbltool_rom *rom,const char *k,int kc) {
+  if (!k) return -1;
+  if (kc<0) { kc=0; while (k[kc]) kc++; }
+  int p=pbltool_rom_search(rom,PBL_TID_metadata,1);
+  if (p<0) return -1;
+  struct pbltool_res *res=rom->resv+p;
+  if ((res->serialc<4)||memcmp(res->serial,"\x00PM\xff",4)) return -1;
+  uint8_t *src=res->serial;
+  int srcp=4;
+  while (srcp<res->serialc) {
+    int qkc=src[srcp++];
+    if (!qkc) return -1;
+    if (srcp>=res->serialc) return -1;
+    int vc=src[srcp++];
+    if (srcp>res->serialc-vc-qkc) return -1;
+    if ((qkc==kc)&&!memcmp(k,src+srcp,kc)) {
+      srcp-=2;
+      int rmc=2+qkc+vc;
+      res->serialc-=rmc;
+      memmove(src+srcp,src+srcp+rmc,res->serialc-srcp);
+      return 0;
+    }
+    srcp+=qkc+vc;
+  }
+  return -1;
+}
