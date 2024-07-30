@@ -1,0 +1,15 @@
+# Must match constants in src/demo_main.c
+fb=160x90
+
+audioRate#=44100
+audioChanc#=1
+title@=Pebble Demo
+title$=1
+author@=AK Sommerville
+copyright@=(c) 2024 AK Sommerville
+freedom=free
+lang=en
+desc@=Demonstrates the basic functionality of Pebble, for testing purposes.
+players=1
+iconImage#=1
+persistKey=12345
