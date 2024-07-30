@@ -152,6 +152,7 @@ int pblrt_inmgr_event(struct pblrt_inmgr *inmgr,int devid,int btnid,int value) {
   }
   if (!(mask&0xffff)) return 0;
   if ((device->state&mask)==state) return 0;
+  device->state|=PBL_BTN_CD;
   device->state=(device->state&~mask)|state;
   if (!device->playerid) {
     device->playerid=pblrt_inmgr_next_playerid(inmgr);
@@ -176,6 +177,7 @@ int pblrt_inmgr_key(struct pblrt_inmgr *inmgr,int keycode,int value) {
   if (value) {
     if (pblrt.instate[0]&keymap->btnid) return 0;
     pblrt.instate[0]|=keymap->btnid;
+    pblrt.instate[0]|=PBL_BTN_CD;
   } else {
     if (!(pblrt.instate[0]&keymap->btnid)) return 0;
     pblrt.instate[0]&=~keymap->btnid;

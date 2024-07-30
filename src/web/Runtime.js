@@ -55,12 +55,12 @@ export class Runtime {
         pbl_store_get: (vp, va, kp, kc) => this.pbl_store_get(vp, va, kp, kc),
         pbl_store_set: (kp, kc, vp, vc) => this.pbl_store_set(kp, kc, vp, vc),
         pbl_store_key_by_index: (kp, ka, p) => this.pbl_store_key_by_index(kp, ka, p),
+        pbl_rom_get: (p, a) => this.pbl_rom_get(p, a),
       },
     };
     return WebAssembly.instantiate(serial, imports).then(({ module, instance }) => {
       this.instance = instance;
       this.memory = new Uint8Array(this.instance.exports.memory.buffer);
-      this.writeRomToClient();
       const err = this.instance.exports.pbl_client_init(
         this.canvas.width, this.canvas.height, this.audio.rate, this.audio.chanc
       );
@@ -71,20 +71,6 @@ export class Runtime {
       this.audio.start();
       this.update();
     });
-  }
-  
-  writeRomToClient() {
-    const dstp = this.instance.exports.pbl_client_rom.value;
-    const lenp = this.instance.exports.pbl_client_rom_size.value;
-    if ((dstp < 0) || (lenp < 0) || (lenp > this.memory.length - 4)) throw new Error(`Invalid ROM storage geometry.`);
-    const view = new DataView(this.memory.buffer);
-    const lena = view.getInt32(lenp, true);
-    if (lena < this.serial.byteLength) {
-      throw new Error(`pbl_client_rom too small. ${lena} bytes, require ${this.serial.byteLength}`);
-    }
-    const cpview = new Uint8Array(this.memory.buffer, dstp, this.serial.byteLength);
-    cpview.set(new Uint8Array(this.serial));
-    view.setInt32(lenp, this.serial.byteLength, true);
   }
   
   initAudio() {
@@ -384,5 +370,13 @@ export class Runtime {
     if (p < 0) return 0;
     const keys = Object.keys(this.store);
     return this.memWriteSafe(kp, ka, keys[p] || "");
+  }
+  
+  pbl_rom_get(p, a) {
+    if ((p < 0) || (a < 0) || (p > this.memory.length - a)) return this.serial.byteLength;
+    const view = new DataView(this.memory.buffer);
+    const cpview = new Uint8Array(this.memory.buffer, p, this.serial.byteLength);
+    cpview.set(new Uint8Array(this.serial));
+    return this.serial.byteLength;
   }
 }

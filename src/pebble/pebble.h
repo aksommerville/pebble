@@ -52,13 +52,6 @@
 /* Client.
  *********************************************************/
 
-/* Runtime will copy the entire ROM file here before launching.
- * pcm_client_rom_size must be statically initialized with the available size; runtime updates with the actual size.
- * If the buffer is too small, we won't launch.
- */
-extern unsigned char pbl_client_rom[];
-extern int pbl_client_rom_size;
-
 /* (status) nonzero if we're terminating abnormally.
  */
 void pbl_client_quit(int status);
@@ -162,5 +155,11 @@ int pbl_begin_input_config(int playerid);
 int pbl_store_get(char *v,int va,const char *k,int kc);
 int pbl_store_set(const char *k,int kc,const char *v,int vc);
 int pbl_store_key_by_index(char *k,int ka,int p);
+
+/* Copy the entire original ROM file to (dst) and return its length.
+ * Nothing is written, if we return >dsta.
+ * This was originally going to be effected via exported globals, but WAMR doesn't support those.
+ */
+int pbl_rom_get(void *dst,int dsta);
  
 #endif

@@ -5,11 +5,8 @@
 #define SCREENW 160
 #define SCREENH 90
 
-// Make this big enough to hold the final ROM. Takes a guess-and-check. No problem to overshoot here.
-// If you're short, loading will fail and it will log loud and clear.
-unsigned char pbl_client_rom[8192]={0};
-int pbl_client_rom_size=sizeof(pbl_client_rom);
-
+static uint8_t rom[8192]={0};
+static int romc=0;
 static uint8_t fb[SCREENW*SCREENH*4]={0};
 static int pvinput=0;
 static int16_t synthbuf[1024]; // Can freely change the size here.
@@ -22,6 +19,11 @@ void pbl_client_quit() {
 
 int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   if ((fbw!=SCREENW)||(fbh!=SCREENH)) return -1;
+  if ((romc=pbl_rom_get(rom,sizeof(rom)))>sizeof(rom)) {
+    pbl_log("Failed to acquire ROM in Wasm app. length=%d available=%d",romc,(int)sizeof(rom));
+    return -1;
+  }
+  pbl_log("Validate ROM: %x %x %x %x %x %x %x %x",rom[0],rom[1],rom[2],rom[3],rom[4],rom[5],rom[6],rom[7]);
   
   // Call all 11 functions of the Pebble Client API.
   pbl_log("Hello I'm logging some text.");
@@ -40,8 +42,6 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   pbl_log("pbl_store_set: %d",pbl_store_set("savedGame",9,"abcdefg",7));
   strc=pbl_store_key_by_index(str,sizeof(str),0);
   pbl_log("pbl_store_key_by_index(0): '%.*s'",strc,str);
-  
-  pbl_log("rom length %d",pbl_client_rom_size);
   
   const int pitchhz=440;
   synth_tone_halfperiod=rate/(pitchhz*2);

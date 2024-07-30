@@ -209,6 +209,13 @@ static int pbl_wasm_store_key_by_index(wasm_exec_env_t ee,char *k,int ka,int p) 
   return 0;
 }
 
+static int pbl_wasm_rom_get(wasm_exec_env_t ee,void *dst,int dsta) {
+  if (pblrt.romc<=dsta) {
+    memcpy(dst,pblrt.rom,pblrt.romc);
+  }
+  return pblrt.romc;
+}
+
 static NativeSymbol pblrt_exec_exports[]={
   {"pbl_log",pbl_wasm_log,"($i)"},
   {"pbl_terminate",pbl_wasm_terminate,"(i)"},
@@ -221,6 +228,7 @@ static NativeSymbol pblrt_exec_exports[]={
   {"pbl_store_get",pbl_wasm_store_get,"(*~*~)i"},
   {"pbl_store_set",pbl_wasm_store_set,"(*~*~)i"},
   {"pbl_store_key_by_index",pbl_wasm_store_key_by_index,"(*~i)i"},
+  {"pbl_rom_get",pbl_wasm_rom_get,"(*~)i"},
 };
 
 #elif EXECFMT==NATIVE
@@ -289,8 +297,6 @@ int pblrt_exec_init() {
     LOADFN(pbl_client_render)
     LOADFN(pbl_client_synth)
     #undef LOADFN
-    
-    //TODO Copy ROM into client.
   
   #elif EXECFMT==NATIVE
     if (pblrt.romc>pbl_client_rom_size) {

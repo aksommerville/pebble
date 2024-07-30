@@ -9,7 +9,7 @@ This time, our approach is to dump everything on the client where possible:
 - Client produces a PCM stream on demand. Rate and channel count negotiated via metadata and rejectable.
 - Host provides timing and four gamepad states, at each update.
 - Host provides language, clock, and persistence.
-- ROM file is copied into client memory initially.
+- ~ROM file is copied into client memory initially.~ Client must call for it.
 
 So unlike Egg, there is no built-in renderer or synthesizer.
 
@@ -38,5 +38,5 @@ Build cases:
 - - [ ] Native
 - - [ ] Web
 - [ ] Native: Persistence.
-- [ ] Native isn't failing due to short pbl_client_rom. Is it even using that?
-- [ ] Native: Am I setting PBL_BTN_CD when a keyboard is present? We're supposed to.
+- [x] Native isn't failing due to short pbl_client_rom. Is it even using that?
+- [x] Native: Am I setting PBL_BTN_CD when a keyboard is present? We're supposed to.
