@@ -59,7 +59,17 @@ static void pbltool_help_unbundle() {
  
 static void pbltool_help_list() {
   fprintf(stderr,"\nUsage: %s list ROM [-fFORMAT]\n\n",pbltool.exename);
-  //TODO
+  fprintf(stderr,
+    "Show content of a ROM file or directory.\n"
+    "\n"
+    "FORMAT:\n"
+    "  default        'TID:RID SIZE' for each resource, using strings for TID if known.\n"
+    "  numeric        'TID:RID SIZE' for each resource, numeric TID always.\n"
+    "  names          'TID NAME RID' for each resource with a name, strings for TID if known. For generating TOC header.\n"
+    "  json           {tid,rid,size,name?}[], numeric tid only.\n"
+    "  summary        'TID COUNT TOTAL_SIZE' for each type.\n"
+    "\n"
+  );
 }
  
 void pbltool_print_usage(const char *topic) {
@@ -148,7 +158,15 @@ static int pbltool_configure_kv(const char *k,int kc,const char *v,int vc) {
     return 0;
   }
   
-  //TODO Options
+  if ((kc==6)&&!memcmp(k,"format",6)) {
+    pbltool.format=v;
+    return 0;
+  }
+  
+  if ((kc==1)&&!memcmp(k,"f",1)) {
+    pbltool.format=v;
+    return 0;
+  }
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",pbltool.exename,kc,k,vc,v);
   return -2;

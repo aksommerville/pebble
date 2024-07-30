@@ -20,6 +20,7 @@ extern struct pbltool {
   int raw; // unpack
   int recompile; // bundle
   const char *template; // bundle, HTML
+  const char *format;
   
   // Transient state for javascript bundler, stashed here for expedience.
   char **jsincludev;

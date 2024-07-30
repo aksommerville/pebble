@@ -25,7 +25,9 @@ Build cases:
 - [ ] pbltool pack: User-defined compile tools.
 - [ ] pbltool bundle recompile
 - [ ] pbltool bundle true-native and fake-native
-- [ ] pbltool list
+- [ ] pbltool unbundle web
+- [ ] pbltool unbundle native
+- [x] pbltool list
 - [ ] pbltool serve
 - [ ] Client API, native.
 - [ ] xegl: Use GLES2 or GL2, currently GL1 as an expedient.
