@@ -45,6 +45,8 @@ Build cases:
 - - [x] ROM access
 - - [x] Simple renderer
 - - [ ] Simple synthesizer
+- - - [ ] Punting this to the end of Lowrez 2024, since if pressed we can do without.
 - - [x] Image decoder
 - [ ] Useful demo, expose all functionality.
 - [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
+- [ ] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)

@@ -25,8 +25,7 @@ pbltool_OPT_ENABLE:=
 demo_CC:=clang --target=wasm32 -c -O3 -MMD -nostdlib -Isrc -Isrc/demo/src -Wno-comment -Wno-incompatible-library-redeclaration -Wno-parentheses
 demo_LD:=$(firstword $(shell which wasm-ld wasm-ld-11)) \
   --no-entry -z stack-size=4194304 --no-gc-sections --allow-undefined --export-table \
-  --export=pbl_client_init --export=pbl_client_quit --export=pbl_client_update --export=pbl_client_render --export=pbl_client_synth \
-  --export=pbl_client_rom --export=pbl_client_rom_size
+  --export=pbl_client_init --export=pbl_client_quit --export=pbl_client_update --export=pbl_client_render --export=pbl_client_synth
 demo_LDPOST:=
 demo_CC_NATIVE:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
 demo_AR_NATIVE:=ar
