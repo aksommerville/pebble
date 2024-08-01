@@ -119,7 +119,7 @@ export class Runtime {
     this.element.appendChild(this.canvas);
     // I would rather use "bitmaprenderer", it avoids unnecessary copying, but as of Chrome Linux 127.0.6533.72, it's not working.
     // Does work fine in Firefox. And unfortunately, I don't seem to be able to detect whether it works or fails.
-    this.context = this.canvas.getContext("2d", { alpha: false });
+    this.context = this.canvas.getContext("2d");
   }
   
   selectDefaultLanguage() {
@@ -373,7 +373,8 @@ export class Runtime {
   }
   
   pbl_rom_get(p, a) {
-    if ((p < 0) || (a < 0) || (p > this.memory.length - a)) return this.serial.byteLength;
+    if ((p < 0) || (a < 1) || (p > this.memory.length - a)) return this.serial.byteLength;
+    if (this.serial.byteLength > a) return this.serial.byteLength;
     const view = new DataView(this.memory.buffer);
     const cpview = new Uint8Array(this.memory.buffer, p, this.serial.byteLength);
     cpview.set(new Uint8Array(this.serial));

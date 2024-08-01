@@ -40,3 +40,9 @@ Build cases:
 - [ ] Native: Persistence.
 - [x] Native isn't failing due to short pbl_client_rom. Is it even using that?
 - [x] Native: Am I setting PBL_BTN_CD when a keyboard is present? We're supposed to.
+- [ ] Client-side utilities, in the demo project.
+- - [x] libc,libm
+- - [x] ROM access
+- - [x] Simple renderer
+- - [ ] Simple synthesizer
+- - [ ] Image decoder

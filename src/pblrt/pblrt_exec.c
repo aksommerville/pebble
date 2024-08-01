@@ -299,12 +299,6 @@ int pblrt_exec_init() {
     #undef LOADFN
   
   #elif EXECFMT==NATIVE
-    if (pblrt.romc>pbl_client_rom_size) {
-      fprintf(stderr,"%s: %d-byte ROM won't fit in %d-byte client buffer.\n",pblrt.romname,pblrt.romc,pbl_client_rom_size);
-      return -2;
-    }
-    memcpy(pbl_client_rom,pblrt.rom,pblrt.romc);
-    pbl_client_rom_size=pblrt.romc;
   #endif
   return 0;
 }
