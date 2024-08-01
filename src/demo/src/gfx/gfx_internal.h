@@ -3,7 +3,6 @@
 
 #include "gfx.h"
 #include "stdlib/egg-stdlib.h"
-#include "pebble/pebble.h" /*XXX Remove when finished. Present now to support logging. */
 #include <stdint.h>
 
 struct gfx_texture {

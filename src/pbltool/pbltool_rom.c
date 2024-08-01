@@ -240,6 +240,7 @@ static int pbltool_rom_add_archive(struct pbltool_rom *rom,const uint8_t *src,in
       }
       if (pbltool_res_set_serial(res,src+srcp,len)<0) return -1;
       srcp+=len;
+      rid++;
     }
   }
   return 0;

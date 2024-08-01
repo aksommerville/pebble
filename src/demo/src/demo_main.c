@@ -2,6 +2,7 @@
 #include "util/rom.h"
 #include "gfx/gfx.h"
 #include "stdlib/egg-stdlib.h"
+#include "image/image.h"
 #include <stdint.h>
 
 // Must match metadata.
@@ -15,6 +16,7 @@ static int synth_tone_halfperiod=12345; // Will recalculate at init, after that 
 static int synth_tone_phase=0; // Counts down.
 static int sprite_texid=0;
 static int xform_texid=0;
+static struct image *fontimage=0; // 1-bit or nothing.
 
 /* Even with only 100 sprites at 8x8, the CPU load is substantial.
  * Noticeably higher when we use "onebit" instead of regular blit.
@@ -128,6 +130,23 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   const int pitchhz=440;
   synth_tone_halfperiod=rate/(pitchhz*2);
   if (synth_tone_halfperiod<1) synth_tone_halfperiod=1;
+  
+  pbl_log("Image decoder test...");
+  int imageid=2;
+  const void *serial=0;
+  int serialc=rom_get(&serial,PBL_TID_image,imageid);
+  pbl_log("image:%d size=%d",imageid,serialc);
+  struct image *image=image_decode(serial,serialc);
+  if (!image) {
+    pbl_log("DECODE FAILED!");
+  } else {
+    pbl_log("Decode ok. v=%p w=%d h=%d stride=%d pixelsize=%d",image->v,image->w,image->h,image->stride,image->pixelsize);
+    if (image->pixelsize==1) {
+      fontimage=image;
+    } else {
+      image_del(image);
+    }
+  }
 
   return 0;
 }
@@ -170,15 +189,16 @@ void pbl_client_update(double elapsed,int in1,int in2,int in3,int in4) {
 }
 
 void *pbl_client_render() {
-
-  /* Clear and rectangles. Easy, fine.
-   */
   gfx_clear(0,0x503038);
+
+  /* Rectangles. Easy, fine.
+   *
   gfx_fill_rect(0,10,10,SCREENW-20,SCREENH-20,0xff008000);
   gfx_trace_rect(0,8,8,SCREENW-16,SCREENH-16,0xff00ffff);
+  /**/
 
   /* Blits (toggle regular or one-bit recoloring). OK
-   */
+   *
   struct sprite *sprite=spritev;
   int i=SPRITEC;
   for (;i-->0;sprite++) {
@@ -188,7 +208,7 @@ void *pbl_client_render() {
   /**/
   
   /* Validate transforms. OK
-   */
+   *
   gfx_blit(0,xform_texid,12,12,0,0,-1,-1,0);
   gfx_blit(0,xform_texid,24,12,0,0,-1,-1,GFX_XFORM_XREV);
   gfx_blit(0,xform_texid,36,12,0,0,-1,-1,GFX_XFORM_YREV);
@@ -208,7 +228,7 @@ void *pbl_client_render() {
   /**/
   
   /* Line. OK
-   */
+   *
   gfx_trace_line(0,1,1,SCREENW-2,SCREENH-2,0xffffff);
   gfx_trace_line(0,1,SCREENH-2,SCREENW-2,1,0xffffff);
   gfx_trace_line(0,3,1,SCREENW-4,1,0xffffff);
@@ -218,7 +238,7 @@ void *pbl_client_render() {
   /* Triangle. OK
    * Mind that there are lots of edge cases we didn't look at.
    * This was copied from eggsc, and I validated pretty hard that first time.
-   */
+   *
   if (SPRITEC>=3) {
     gfx_fill_trig(0,
       spritev[0].x,spritev[0].y,
@@ -235,6 +255,10 @@ void *pbl_client_render() {
   gfx_fill_oval(0,10,10,SCREENW-21,SCREENH-21,0xffffff);
   gfx_trace_oval(0,10,10,SCREENW-20,SCREENH-20,0x00ffff);
   /**/
+  
+  if (fontimage) {
+    gfx_blit_onebit(0,5,5,fontimage->v,fontimage->stride,fontimage->w,fontimage->h,0,0,-1,-1,0,0xff8040);
+  }
    
   return gfx_finish();
 }

@@ -34,7 +34,7 @@ void free(void *p);
 void *realloc(void *p,int c);
 void *calloc(int c,int size);
 
-void *memcpy(void *dst,const void *src,int c);
+void *memcpy(void *dst,const void *src,unsigned long c);
 void *memmove(void *dst,const void *src,int c);
 int memcmp(const void *a,const void *b,int c);
 int strncmp(const char *a,const char *b,int limit);

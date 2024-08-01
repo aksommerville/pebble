@@ -45,4 +45,6 @@ Build cases:
 - - [x] ROM access
 - - [x] Simple renderer
 - - [ ] Simple synthesizer
-- - [ ] Image decoder
+- - [x] Image decoder
+- [ ] Useful demo, expose all functionality.
+- [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.

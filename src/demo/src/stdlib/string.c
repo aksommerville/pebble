@@ -1,6 +1,6 @@
 #include "egg-stdlib.h"
 
-void *memcpy(void *dst,const void *src,int c) {
+void *memcpy(void *dst,const void *src,unsigned long c) {
   if (((*(int*)dst)&3)||((*(int*)src)&3)||(c&3)) {
     char *DST=dst;
     const char *SRC=src;
