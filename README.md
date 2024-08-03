@@ -41,14 +41,14 @@ Build cases:
 - [ ] Native: Persistence.
 - [x] Native isn't failing due to short pbl_client_rom. Is it even using that?
 - [x] Native: Am I setting PBL_BTN_CD when a keyboard is present? We're supposed to.
-- [ ] Client-side utilities, in the demo project.
+- [x] Client-side utilities, in the demo project.
 - - [x] libc,libm
 - - [x] ROM access
 - - [x] Simple renderer
 - - [x] Simple synthesizer
 - - - xxx Punting this to the end of Lowrez 2024, since if pressed we can do without.
 - - - Actually, performance is questionable, I need to see how bad this gets. Do it.
-- - - [ ] Clean up the two test songs.
+- - - [x] Clean up the two test songs.
 - - - [x] Sound effects. Need at least some kind of pitch bend.
 - - [x] Image decoder
 - [ ] Useful demo, expose all functionality.

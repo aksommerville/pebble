@@ -157,7 +157,7 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   { uint8_t coefv[]={0xff,0xc0,0x80,0x40,0x20,0x10}; lofi_wave_init_harmonics(7,coefv,sizeof(coefv)); }
   
   {
-    serialc=rom_get(&serial,PBL_TID_song,2);
+    serialc=rom_get(&serial,PBL_TID_song,1);
     lofi_play_song(serial,serialc);
   }
 

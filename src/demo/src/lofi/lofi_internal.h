@@ -3,7 +3,6 @@
 
 #include "lofi.h"
 #include "stdlib/egg-stdlib.h"
-#include "pebble/pebble.h"/*XXX TEMP*/
 
 /* These limits are tweakable, within reason.
  */
