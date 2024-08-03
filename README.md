@@ -22,14 +22,15 @@ Build cases:
 
 ## TODO
 
-- [ ] pbltool pack: User-defined compile tools.
+- [ ] pbltool pack: User-defined resource compilers.
 - [ ] pbltool bundle recompile
-- [ ] pbltool bundle true-native and fake-native
+- [x] pbltool bundle fake-native
+- [x] pbltool bundle true-native <-- Get this working during LowRezJam
 - [ ] pbltool unbundle web
 - [ ] pbltool unbundle native
 - [x] pbltool list
 - [ ] pbltool serve
-- [ ] Client API, native.
+- [x] Client API, native.
 - [ ] xegl: Use GLES2 or GL2, currently GL1 as an expedient.
 - [ ] Remaining Linux drivers: drmgx, bcm, asound, pulse
 - [ ] MacOS drivers.

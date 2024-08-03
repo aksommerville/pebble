@@ -85,7 +85,7 @@ static void pbl_wasm_log(wasm_exec_env_t ee,const char *fmt,int vargs) {
         } break;
       case 'f': {
           fmt++;
-          if (vargs&3) vargs+=4;
+          if (vargs&4) vargs+=4;
           double v=0.0;
           const double *vp=pblrt_exec_get_client_memory(vargs,8);
           if (vp) v=*vp;
@@ -232,7 +232,92 @@ static NativeSymbol pblrt_exec_exports[]={
 };
 
 #elif EXECFMT==NATIVE
-  //TODO
+
+#include <stdarg.h>
+
+void pbl_log(const char *fmt,...) {
+  // pbl_log() is a subset of printf(), so just use real printf since we have it.
+  va_list vargs;
+  va_start(vargs,fmt);
+  char msg[1024];
+  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+  if ((msgc<1)||(msgc>=sizeof(msg))) msgc=0;
+  fprintf(stderr,"GAME: %.*s\n",msgc,msg);
+}
+
+void pbl_terminate(int status) {
+  pblrt.terminate++;
+  pblrt.termstatus=(status<0)?1:status;
+}
+
+void pbl_set_synth_limit(int samplec) {
+  pblrt.synth_limit=samplec;
+}
+
+double pbl_now_real() {
+  struct timeval tv={0};
+  gettimeofday(&tv,0);
+  return (double)tv.tv_sec+(double)tv.tv_usec/1000000.0;
+}
+
+void pbl_now_local(int *dst,int dsta) {
+  if (!dst||(dsta<1)) return;
+  time_t now=time(0);
+  struct tm *tm=localtime(&now);
+  if (!tm) return;
+  if (dsta>7) dsta=7;
+  *dst++=1900+tm->tm_year; if (dsta<2) return;
+  *dst++=1+tm->tm_mon; if (dsta<3) return;
+  *dst++=tm->tm_mday; if (dsta<4) return;
+  *dst++=tm->tm_hour; if (dsta<5) return;
+  *dst++=tm->tm_min; if (dsta<6) return;
+  *dst++=tm->tm_sec; if (dsta<7) return;
+  struct timeval tv={0};
+  gettimeofday(&tv,0);
+  *dst=tv.tv_usec/1000;
+}
+
+int pbl_get_global_language() {
+  return pblrt.lang;
+}
+
+void pbl_set_global_language(int lang) {
+  if (lang&~0x3ff) return;
+  char hi='a'+((lang>>5)&31);
+  char lo='a'+(lang&31);
+  if ((hi>'z')||(lo>'z')) return;
+  fprintf(stderr,"%s %d (%c%c)\n",__func__,lang,hi,lo);
+  if (lang==pblrt.lang) return;
+  pblrt.lang=lang;
+  pblrt_lang_changed();
+}
+
+int pbl_begin_input_config(int playerid) {
+  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
+  return -1;
+}
+
+int pbl_store_get(char *v,int va,const char *k,int kc) {
+  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
+  return 0;
+}
+
+int pbl_store_set(const char *k,int kc,const char *v,int vc) {
+  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
+  return 0;
+}
+
+int pbl_store_key_by_index(char *k,int ka,int p) {
+  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
+  return 0;
+}
+
+int pbl_rom_get(void *dst,int dsta) {
+  if (pblrt.romc<=dsta) {
+    memcpy(dst,pblrt.rom,pblrt.romc);
+  }
+  return pblrt.romc;
+}
 
 #else
   #error "Please compile with either -DEXECFMT=WASM or -DEXECFMT=NATIVE."
@@ -314,8 +399,8 @@ int pblrt_exec_update(double elapsed) {
     fprintf(stderr,"%s: pbl_client_update failed hard\n",pblrt.romname);
     return -2;
   
-  #elif EXEFMT==NATIVE
-    return pbl_client_update(elapsed,pblrt.instate[0],pblrt.instate[1],pblrt.instate[2],pblrt.instate[3]);
+  #elif EXECFMT==NATIVE
+    pbl_client_update(elapsed,pblrt.instate[0],pblrt.instate[1],pblrt.instate[2],pblrt.instate[3]);
   #endif
   return 0;
 }
@@ -420,7 +505,7 @@ int pblrt_exec_refill_audio() {
         }
       }
   
-    #elif EXEFMT==NATIVE
+    #elif EXECFMT==NATIVE
       src=pbl_client_synth(updc);
     #endif
     

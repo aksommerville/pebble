@@ -7,7 +7,9 @@ WAMR_SDK:=/path/to/wasm-micro-runtime
 
 # Who are we building for?
 # You must build pbltool first, for everything else to work.
+# NATIVE_TARGET is the one TARGET that pbltool will use for bundling native programs.
 TARGETS:=pbltool demo web linux
+NATIVE_TARGET:=linux
 
 # Shorthand commands. Usually just an alias for some target-specific command.
 run:linux-run

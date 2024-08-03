@@ -112,7 +112,6 @@ static int pbltool_lofi_from_midi_inner(struct sr_encoder *dst,struct midi_file 
  */
  
 static int pbltool_lofi_from_midi(struct pbltool_res *res) {
-  fprintf(stderr,"%s... srcc=%d\n",__func__,res->serialc);
   // Instantiating with a rate of 1000 means it will naturally express in milliseconds, as we need.
   struct midi_file *src=midi_file_new(res->serial,res->serialc,1000);
   if (!src) {

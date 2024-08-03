@@ -69,45 +69,29 @@ linux-all:$(linux_LIB_FAKE)
 linux_OFILES_LIB_FAKE:=$(linux_OFILES) $(linux_ROMSRC_EMBEDDED) $(linux_EXEC_WASM)
 $(linux_LIB_FAKE):$(linux_OFILES_LIB_FAKE);$(PRECMD) $(linux_AR) rc $@ $^
 
-ifeq (,Native game executables. Copied from eggsc. Get to this when we get to it.)
-# demo-fake: Fake-native executable of our demo ROM.
+ifeq ($(NATIVE_TARGET),linux)
+
+# demo-fake: The demo ROM wrapped in our regular runtime. Almost identical to running `pebble ROM`.
 linux_DEMO_FAKE:=$(linux_OUTDIR)/demo-fake
 linux-all:$(linux_DEMO_FAKE)
-linux_DEMO_FAKE_O:=$(linux_MIDDIR)/demo-fake.o
-linux_DEMO_FAKE_S:=$(linux_MIDDIR)/demo-fake.s
-$(linux_DEMO_FAKE_S):;$(PRECMD) echo \
-  '.globl eggzek_embedded_rom,eggzek_embedded_rom_size\n' \
-  'eggzek_embedded_rom:\n' \
-  '.incbin "'$(demos_ROM)'"\n' \
-  'eggzek_embedded_rom_end:\n' \
-  'eggzek_embedded_rom_size:.int (eggzek_embedded_rom_end-eggzek_embedded_rom)' > $@
-$(linux_DEMO_FAKE_O):$(demos_ROM) $(linux_DEMO_FAKE_S);$(PRECMD) $(linux_CC) -xassembler-with-cpp -o$@ $(linux_DEMO_FAKE_S)
-$(linux_DEMO_FAKE):$(linux_LIB_FAKE) $(linux_DEMO_FAKE_O);$(PRECMD) $(linux_LD) -o$@ $^ $(linux_LDPOST)
+$(linux_DEMO_FAKE):$(linux_LIB_FAKE) $(demo_ROM) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) bundle -o$@ $(demo_ROM)
 
-# demo-true: True-native executable of our demo ROM.
+# demo-true: Compile the game's code for Linux, and bundle as the real thing. No WebAssembly required.
 linux_DEMO_TRUE:=$(linux_OUTDIR)/demo-true
 linux-all:$(linux_DEMO_TRUE)
-linux_DEMO_TRUE_ROM:=$(linux_MIDDIR)/demo-true.egg
-$(linux_DEMO_TRUE_ROM):$(demos_ROM) $(tools_EXE_EGGDEV);$(PRECMD) $(tools_EXE_EGGDEV) stripcode -o$@ $<
-linux_DEMO_TRUE_GAME_CFILES:=$(filter src/demo/src/%.c,$(SRCFILES))
-linux_DEMO_TRUE_GAME_OFILES:=$(patsubst src/demo/src/%.c,$(linux_MIDDIR)/demo/%.o,$(linux_DEMO_TRUE_GAME_CFILES))
--include $(linux_DEMO_TRUE_GAME_OFILES:.o=.d)
-$(linux_MIDDIR)/demo/%.o:src/demo/src/%.c;$(PRECMD) $(linux_CC) -o$@ $< -DUSE_REAL_STDLIB=1
-linux_DEMO_TRUE_O:=$(linux_MIDDIR)/demo-true.o
-linux_DEMO_TRUE_S:=$(linux_MIDDIR)/demo-true.s
-$(linux_DEMO_TRUE_S):;$(PRECMD) echo \
-  '.globl eggzek_embedded_rom,eggzek_embedded_rom_size\n' \
-  'eggzek_embedded_rom:\n' \
-  '.incbin "'$(linux_DEMO_TRUE_ROM)'"\n' \
-  'eggzek_embedded_rom_end:\n' \
-  'eggzek_embedded_rom_size:.int (eggzek_embedded_rom_end-eggzek_embedded_rom)' > $@
-$(linux_DEMO_TRUE_O):$(linux_DEMO_TRUE_ROM) $(linux_DEMO_TRUE_S);$(PRECMD) $(linux_CC) -xassembler-with-cpp -o$@ $(linux_DEMO_TRUE_S)
-linux_DEMO_TRUE_OFILES:=$(filter-out \
-  $(linux_MIDDIR)/eggzek/eggzek_romsrc_external.o \
-  $(linux_MIDDIR)/eggrt/cpu/% \
-,$(linux_OFILES)) $(linux_MIDDIR)/eggrt/cpu/eggrt_cpu_native.o $(linux_DEMO_TRUE_O) $(linux_DEMO_TRUE_GAME_OFILES)
-linux_DEMO_TRUE_LDPOST:=$(filter-out %libvmlib.a,$(linux_LDPOST))
-$(linux_DEMO_TRUE):$(linux_DEMO_TRUE_OFILES);$(PRECMD) $(linux_LD) -o$@ $^ $(linux_DEMO_TRUE_LDPOST)
+linux_DEMO_TRUE_CFILES:=$(filter-out src/demo/src/stdlib/%,$(filter src/demo/src/%.c,$(SRCFILES)))
+linux_DEMO_TRUE_OFILES:=$(patsubst src/%.c,$(linux_MIDDIR)/%.o,$(linux_DEMO_TRUE_CFILES))
+-include $(linux_DEMO_TRUE_OFILES:.o=.d)
+$(linux_MIDDIR)/demo/%.o:src/demo/%.c;$(PRECMD) $(linux_CC) -Isrc/demo/src -o$@ $< -DUSE_REAL_STDLIB=1
+linux_DEMO_TRUE_LIB:=$(linux_MIDDIR)/libdemotrue.a
+$(linux_DEMO_TRUE_LIB):$(linux_DEMO_TRUE_OFILES);$(PRECMD) $(linux_AR) rc $@ $^
+$(linux_DEMO_TRUE):$(linux_LIB_TRUE) $(linux_DEMO_TRUE_LIB) $(demo_ROM) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) bundle -o$@ $(demo_ROM) $(linux_DEMO_TRUE_LIB)
+
+# demo-true-recomp: A simpler alternative for DEMO_TRUE, but I'm not sure we'll be able to pull it off:
+linux_DEMO_TRUE_RECOMP:=$(linux_OUTDIR)/demo-true-recomp
+#linux-all:$(linux_DEMO_TRUE_RECOMP)
+$(linux_DEMO_TRUE_RECOMP):$(linux_LIB_TRUE) $(demo_ROM) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) bundle -o$@ $(demo_ROM) --recompile
+
 endif
 
 linux-run:$(linux_EXE_PEBBLE) $(demo_ROM);$(linux_EXE_PEBBLE) $(demo_ROM)
