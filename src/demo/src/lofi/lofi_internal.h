@@ -38,12 +38,14 @@ struct lofi_voice {
   struct lofi_wave *wave;
   uint32_t p;
   uint32_t dp;
+  uint32_t ddp;
   int ttl;
   struct lofi_env env;
 };
 
 extern struct lofi {
   int rate,chanc;
+  struct lofi_wave sine;
   struct lofi_wave wavev[LOFI_WAVE_LIMIT];
   struct lofi_voice voicev[LOFI_VOICE_LIMIT];
   int voicec;
@@ -51,7 +53,7 @@ extern struct lofi {
   
   // (song==null) is the one and only indicator whether a song is playing.
   struct lofi_channel {
-    uint8_t waveid;
+    uint8_t program; // 0xf8=env 0x07=wave
     uint8_t trim;
   } channelv[LOFI_CHANNEL_COUNT];
   const uint8_t *song; // Start of events; we strip the header at load.

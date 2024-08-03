@@ -86,13 +86,17 @@ static int pbltool_lofi_from_midi_inner(struct sr_encoder *dst,struct midi_file 
         } break;
         
       case 0xb0: if (event.chid<8) switch (event.a) {
-          case 0x00: break; // TODO Do we care about Bank Switch?
-          case 0x20: break;
+          case 0x20: {
+              uint8_t *pid=((uint8_t*)(dst->v))+chhdrp+(event.chid*2);
+              if (event.b&1) (*pid)|=0x80;
+              else (*pid)&=~0x80;
+            } break;
           case 0x07: ((uint8_t*)(dst->v))[chhdrp+(event.chid*2)+1]=event.b<<1; break;
         } break;
         
       case 0xc0: if (event.chid<8) {
-          ((uint8_t*)(dst->v))[chhdrp+(event.chid*2)]=event.b&7; break;
+          uint8_t *pid=((uint8_t*)(dst->v))+chhdrp+(event.chid*2);
+          (*pid)=((*pid)&0x80)|(event.a&0x7f);
         } break;
         
     }

@@ -19,13 +19,14 @@ int lofi_wave_init_sine(int waveid);
 int lofi_wave_init_square(int waveid);
 int lofi_wave_init_saw(int waveid);
 int lofi_wave_init_triangle(int waveid);
+int lofi_wave_init_harmonics(int waveid,const uint8_t *coefv,int coefc);
 
 void lofi_update(int16_t *v,int c);
 
 /* Start a note.
  * May evict a running note, if we're at the voice limit.
  */
-void lofi_note(int waveid,int trim_u8,int noteid,int durms);
+void lofi_note(uint8_t program,uint8_t trim,uint8_t noteida,uint8_t noteidz,int durms);
 
 /* Stop any current song and replace with this.
  * (0,0) to only turn off current song.

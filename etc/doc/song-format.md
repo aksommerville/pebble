@@ -15,7 +15,7 @@ File begins with a 4-byte signature: "L\0\0\xf1"
 
 Followed by 8 channel headers, 16 bytes total:
 ```
-0000   1 Wave ID 0..7
+0000   1 0xf8=env, 0x07=wave
 0001   1 Trim 0..255
 0002
 ```

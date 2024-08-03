@@ -151,10 +151,14 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   lofi_wave_init_square(1);
   lofi_wave_init_saw(2);
   lofi_wave_init_triangle(3);
+  { uint8_t coefv[]={0x80,0x40,0x20,0x10,0x08}; lofi_wave_init_harmonics(4,coefv,sizeof(coefv)); }
+  { uint8_t coefv[]={0xa0,0x00,0x40,0x00,0x10}; lofi_wave_init_harmonics(5,coefv,sizeof(coefv)); }
+  { uint8_t coefv[]={0x40,0x50,0x30,0x10,0x08,0x10,0x08,0x10}; lofi_wave_init_harmonics(6,coefv,sizeof(coefv)); }
+  { uint8_t coefv[]={0xff,0xc0,0x80,0x40,0x20,0x10}; lofi_wave_init_harmonics(7,coefv,sizeof(coefv)); }
   
   {
     serialc=rom_get(&serial,PBL_TID_song,1);
-    lofi_play_song(serial,serialc);
+    //lofi_play_song(serial,serialc);
   }
 
   return 0;
@@ -186,20 +190,28 @@ void pbl_client_update(double elapsed,int in1,int in2,int in3,int in4) {
       #undef _
     );
     #define PRESS(tag) ((input&PBL_BTN_##tag)&&!(pvinput&PBL_BTN_##tag))
-    if (PRESS(UP   )) lofi_note(0,0x40,0x40,500);
-    if (PRESS(DOWN )) lofi_note(0,0x40,0x43,500);
-    if (PRESS(LEFT )) lofi_note(0,0x40,0x47,500);
-    if (PRESS(RIGHT)) lofi_note(0,0x40,0x4c,500);
-    if (PRESS(SOUTH)) lofi_note(0,0x40,0x4f,500);
-    if (PRESS(WEST )) lofi_note(0,0x40,0x53,500);
-    if (PRESS(EAST )) lofi_note(0,0x40,0x58,500);
-    if (PRESS(NORTH)) lofi_note(0,0x40,0x5b,500);
-    if (PRESS(L1   )) lofi_note(0,0x40,0x5f,500);
-    if (PRESS(R1   )) lofi_note(0,0x40,0x64,500);
-    if (PRESS(L2   )) lofi_note(0,0x40,0x69,500);
-    if (PRESS(R2   )) lofi_note(0,0x40,0x70,500);
-    if (PRESS(AUX1 )) lofi_note(0,0x40,0x70,500);
-    if (PRESS(AUX2 )) lofi_note(0,0x40,0x70,500);
+    uint8_t program=(
+      ( 0 ?0x80:0)| // sharp attack
+      ( 0 <<5)| // attack time 0..3
+      ( 0 <<3)| // release time 0..3
+      7 // wave id 0..7
+    );
+    int durms=50;
+    if (PRESS(UP   )) lofi_note(program,0x80,0x30,0x20,durms);
+    if (PRESS(DOWN )) lofi_note(program,0x80,0x41,0x50,durms);
+    if (PRESS(LEFT )) lofi_note(program,0x80,0x42,0x50,durms);
+    if (PRESS(RIGHT)) lofi_note(program,0x80,0x43,0x50,durms);
+    if (PRESS(SOUTH)) lofi_note(program,0x80,0x44,0x50,durms);
+    if (PRESS(WEST )) lofi_note(program,0x80,0x45,0x50,durms);
+    if (PRESS(EAST )) lofi_note(program,0x80,0x46,0x30,durms);
+    if (PRESS(NORTH)) lofi_note(program,0x80,0x47,0x30,durms);
+    if (PRESS(L1   )) lofi_note(program,0x80,0x48,0x30,durms);
+    if (PRESS(R1   )) lofi_note(program,0x80,0x49,0x30,durms);
+    if (PRESS(L2   )) lofi_note(program,0x80,0x4a,0x30,durms);
+    if (PRESS(R2   )) lofi_note(program,0x80,0x4b,0x30,durms);
+    if (PRESS(AUX1 )) lofi_note(program,0x80,0x4c,0x30,durms);
+    if (PRESS(AUX2 )) lofi_note(program,0x80,0x4d,0x30,durms);
+    if (PRESS(AUX3 )) lofi_note(program,0x80,0x20,0x28,durms);
     #undef PRESS
     pvinput=input;
   }

@@ -68,7 +68,7 @@ static void lofi_update_song() {
     int noteid=((lead<<3)&0x78)|(lofi.song[lofi.songp]>>5);
     int durms=((lofi.song[lofi.songp]&0x1f)<<8)|lofi.song[lofi.songp+1];
     lofi.songp+=2;
-    lofi_note(lofi.channelv[chid].waveid,lofi.channelv[chid].trim,noteid,durms);
+    lofi_note(lofi.channelv[chid].program,lofi.channelv[chid].trim,noteid,noteid,durms);
   }
 }
 

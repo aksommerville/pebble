@@ -47,6 +47,8 @@ Build cases:
 - - [x] Simple synthesizer
 - - - xxx Punting this to the end of Lowrez 2024, since if pressed we can do without.
 - - - Actually, performance is questionable, I need to see how bad this gets. Do it.
+- - - [ ] Clean up the two test songs.
+- - - [x] Sound effects. Need at least some kind of pitch bend.
 - - [x] Image decoder
 - [ ] Useful demo, expose all functionality.
 - [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
