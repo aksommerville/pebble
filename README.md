@@ -44,8 +44,9 @@ Build cases:
 - - [x] libc,libm
 - - [x] ROM access
 - - [x] Simple renderer
-- - [ ] Simple synthesizer
-- - - [ ] Punting this to the end of Lowrez 2024, since if pressed we can do without.
+- - [x] Simple synthesizer
+- - - xxx Punting this to the end of Lowrez 2024, since if pressed we can do without.
+- - - Actually, performance is questionable, I need to see how bad this gets. Do it.
 - - [x] Image decoder
 - [ ] Useful demo, expose all functionality.
 - [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.

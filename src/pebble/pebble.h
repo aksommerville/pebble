@@ -18,11 +18,13 @@
 #define PBL_TID_code 2
 #define PBL_TID_strings 3
 #define PBL_TID_image 4
+#define PBL_TID_song 5
 #define PBL_TID_FOR_EACH \
   _(metadata) \
   _(code) \
   _(strings) \
-  _(image)
+  _(image) \
+  _(song)
 
 /* Input device state.
  * CD ("Carrier detect") is set if any device is attached.

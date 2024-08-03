@@ -43,13 +43,16 @@ int pbltool_jsinclude_intern(const char *path,int pathc);
 
 /* If content needs to change, these will replace (res->serial).
  * Uncompilers may amend (name,comment,format) to influence the output file name.
+ * Add a type here, remember to add to pbltool_main_pack.c and pbltool_main_unpack.c.
  */
 int pbltool_compile_metadata(struct pbltool_res *res);
 int pbltool_compile_strings(struct pbltool_res *res);
 int pbltool_compile_image(struct pbltool_res *res);
+int pbltool_compile_song(struct pbltool_res *res);
 int pbltool_uncompile_metadata(struct pbltool_res *res);
 int pbltool_uncompile_strings(struct pbltool_res *res);
 int pbltool_uncompile_image(struct pbltool_res *res);
+int pbltool_uncompile_song(struct pbltool_res *res);
 
 int pbltool_configure(int argc,char **argv);
 void pbltool_print_usage(const char *topic);

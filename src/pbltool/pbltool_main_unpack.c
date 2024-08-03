@@ -14,6 +14,7 @@ static int pbltool_unpack_digest(struct pbltool_rom *rom) {
       case PBL_TID_code: break;
       case PBL_TID_strings: err=pbltool_uncompile_strings(res); break;
       case PBL_TID_image: err=pbltool_uncompile_image(res); break;
+      case PBL_TID_song: err=pbltool_uncompile_song(res); break;
       default: {
           //TODO Similar to `pack`, should we allow user conversion hooks?
         }

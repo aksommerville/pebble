@@ -223,7 +223,7 @@ int image_reformat_in_place(
   if (!w) w=image->w;
   if (!h) h=image->h;
   if ((w<1)||(w>0x7fff)) return -1;
-  if ((h<1)||(h<0x7fff)) return -1;
+  if ((h<1)||(h>0x7fff)) return -1;
   int nstride=(w*pixelsize+7)>>3;
   if ((image->pixelsize==pixelsize)&&(image->w==w)&&(image->h==h)&&(image->stride==nstride)) return 0;
   if (nstride>INT_MAX/h) return -1;

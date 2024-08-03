@@ -3,7 +3,7 @@
 pbltool_MIDDIR:=mid/pbltool
 pbltool_OUTDIR:=out/pbltool
 
-pbltool_OPT_ENABLE+=fs image serial
+pbltool_OPT_ENABLE+=fs image serial midi
 
 pbltool_CC+=$(patsubst %,-DUSE_%=1,$(pbltool_OPT_ENABLE)) -DPBL_SDK=\"$(abspath .)\"
 pbltool_SRCINCLUDE:=$(addprefix src/opt/,$(addsuffix /%,$(pbltool_OPT_ENABLE))) src/pbltool/%

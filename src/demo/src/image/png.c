@@ -1,7 +1,6 @@
 #include "image.h"
 #include "zlib/zlib.h"
 #include "stdlib/egg-stdlib.h"
-#include "pebble/pebble.h"
 #include <stdint.h>
 
 /* The Paeth predictor.
@@ -77,9 +76,7 @@ static int decode_IHDR(struct png_decoder *decoder,const uint8_t *src,int srcc) 
   if (decoder->xstride<1) decoder->xstride=1;
   if (!(decoder->image=image_new_alloc(pixelsize,w,h))) return -1;
   if (!(decoder->rowbuf=malloc(1+decoder->image->stride))) return -1;
-  pbl_log("%s:%d",__FILE__,__LINE__);
   if (inflateInit(&decoder->z)<0) return -1;
-  pbl_log("%s:%d",__FILE__,__LINE__);
   decoder->zinit=1;
   decoder->z.next_out=(Bytef*)decoder->rowbuf;
   decoder->z.avail_out=1+decoder->image->stride;

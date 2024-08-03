@@ -3,6 +3,7 @@
 #include "gfx/gfx.h"
 #include "stdlib/egg-stdlib.h"
 #include "image/image.h"
+#include "lofi/lofi.h"
 #include <stdint.h>
 
 // Must match metadata.
@@ -51,6 +52,7 @@ void pbl_client_quit() {
   // I'm doing it to ensure that our heap usage return to zero, just for validation.
   rom_quit();
   gfx_quit();
+  lofi_quit();
 }
 
 int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
@@ -59,6 +61,7 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   if ((fbw!=SCREENW)||(fbh!=SCREENH)) return -1;
   if (rom_init()<0) return -1;
   if (gfx_init(fbw,fbh)<0) return -1;
+  if (lofi_init(rate,chanc)<0) return -1;
   
   #define _ "\0\0\0\0"
   #define K "\0\0\0\xff"
@@ -127,10 +130,6 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
   strc=pbl_store_key_by_index(str,sizeof(str),0);
   pbl_log("pbl_store_key_by_index(0): '%.*s'",strc,str);
   
-  const int pitchhz=440;
-  synth_tone_halfperiod=rate/(pitchhz*2);
-  if (synth_tone_halfperiod<1) synth_tone_halfperiod=1;
-  
   pbl_log("Image decoder test...");
   int imageid=2;
   const void *serial=0;
@@ -146,6 +145,16 @@ int pbl_client_init(int fbw,int fbh,int rate,int chanc) {
     } else {
       image_del(image);
     }
+  }
+  
+  lofi_wave_init_sine(0);
+  lofi_wave_init_square(1);
+  lofi_wave_init_saw(2);
+  lofi_wave_init_triangle(3);
+  
+  {
+    serialc=rom_get(&serial,PBL_TID_song,1);
+    lofi_play_song(serial,serialc);
   }
 
   return 0;
@@ -176,6 +185,22 @@ void pbl_client_update(double elapsed,int in1,int in2,int in3,int in4) {
       _(CD)
       #undef _
     );
+    #define PRESS(tag) ((input&PBL_BTN_##tag)&&!(pvinput&PBL_BTN_##tag))
+    if (PRESS(UP   )) lofi_note(0,0x40,0x40,500);
+    if (PRESS(DOWN )) lofi_note(0,0x40,0x43,500);
+    if (PRESS(LEFT )) lofi_note(0,0x40,0x47,500);
+    if (PRESS(RIGHT)) lofi_note(0,0x40,0x4c,500);
+    if (PRESS(SOUTH)) lofi_note(0,0x40,0x4f,500);
+    if (PRESS(WEST )) lofi_note(0,0x40,0x53,500);
+    if (PRESS(EAST )) lofi_note(0,0x40,0x58,500);
+    if (PRESS(NORTH)) lofi_note(0,0x40,0x5b,500);
+    if (PRESS(L1   )) lofi_note(0,0x40,0x5f,500);
+    if (PRESS(R1   )) lofi_note(0,0x40,0x64,500);
+    if (PRESS(L2   )) lofi_note(0,0x40,0x69,500);
+    if (PRESS(R2   )) lofi_note(0,0x40,0x70,500);
+    if (PRESS(AUX1 )) lofi_note(0,0x40,0x70,500);
+    if (PRESS(AUX2 )) lofi_note(0,0x40,0x70,500);
+    #undef PRESS
     pvinput=input;
   }
   
@@ -264,21 +289,6 @@ void *pbl_client_render() {
 }
 
 void *pbl_client_synth(int samplec) {
-  return 0; // It's not pretty to listen to. Disabling by default.
-  // !!! We're assuming that we got the desired mono output. Not necessarily true, in fact my test setup gives us stereo anyway.
-  // It's allowed to do that.
-  // The only problem getting stereo instead of mono, is our pitch emits an octave higher than expected. Whatever.
-  int16_t *dst=synthbuf;
-  while (samplec>0) {
-    if (synth_tone_phase<=0) {
-      synth_tone_phase=synth_tone_halfperiod;
-      synth_tone_level=-synth_tone_level;
-    }
-    int cpc=synth_tone_phase;
-    if (cpc>samplec) cpc=samplec;
-    samplec-=cpc;
-    synth_tone_phase-=cpc;
-    for (;cpc-->0;dst++) *dst=synth_tone_level;
-  }
+  lofi_update(synthbuf,samplec);
   return synthbuf;
 }

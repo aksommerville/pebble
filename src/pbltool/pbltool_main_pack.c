@@ -30,6 +30,7 @@ static int pbltool_pack_digest(struct pbltool_rom *rom) {
       case PBL_TID_code: break; // code is always verbatim.
       case PBL_TID_strings: err=pbltool_compile_strings(res); break;
       case PBL_TID_image: err=pbltool_compile_image(res); break;
+      case PBL_TID_song: err=pbltool_compile_song(res); break;
       default: {
           //TODO I'd like to have some mechanism for calling out to user-defined compile tools.
         }

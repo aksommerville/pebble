@@ -7,7 +7,7 @@ struct pblrt pblrt={0};
  */
  
 static void pblrt_rcvsig(int sigid) {
-  if (0) switch (sigid) {
+  switch (sigid) {
     case SIGINT: if (++(pblrt.terminate)>=3) {
         fprintf(stderr,"%s: Too many unprocessed signals.\n",pblrt.exename);
         exit(1);

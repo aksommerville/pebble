@@ -63,6 +63,7 @@ To wit:
 |      2 | code        | Wasm module. rid must be 1. |
 |      3 | strings     | See strings-format.md. |
 |      4 | image       | See image-format.md. |
-|  5..15 |             | Reserved for future standard types. |
+|      5 | song        | See song-format.md. |
+|  6..15 |             | Reserved for future standard types. |
 | 16..63 |             | Reserved for user-defined types. |
 | 64..   |             | Illegal. |
