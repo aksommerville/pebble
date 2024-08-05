@@ -35,4 +35,9 @@ void lofi_note(uint8_t program,uint8_t trim,uint8_t noteida,uint8_t noteidz,int 
  */
 void lofi_play_song(const void *src,int srcc);
 
+/* Truncate sustain of all running voices so they finish soon.
+ * This happens automatically when you change songs.
+ */
+void lofi_release_all();
+
 #endif

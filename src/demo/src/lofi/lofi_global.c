@@ -140,4 +140,22 @@ void lofi_play_song(const void *src,int srcc) {
   lofi.songc=srcc-20;
   lofi.songp=0;
   lofi.songdelay=0;
+  lofi_release_all();
+}
+
+/* Release all voices.
+ */
+ 
+void lofi_release_all() {
+  struct lofi_voice *voice=lofi.voicev;
+  int i=lofi.voicec;
+  for (;i-->0;voice++) {
+    if (voice->env.stage==0) continue;
+    if (voice->env.stage>=4) continue; // already releasing
+    if (voice->env.stage==3) { // sustain in progress
+      voice->env.p=voice->env.c;
+    } else { // pre-sustain
+      voice->env.sust=1;
+    }
+  }
 }

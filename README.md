@@ -24,13 +24,9 @@ Build cases:
 
 - [ ] pbltool pack: User-defined resource compilers.
 - [ ] pbltool bundle recompile
-- [x] pbltool bundle fake-native
-- [x] pbltool bundle true-native <-- Get this working during LowRezJam
 - [ ] pbltool unbundle web
 - [ ] pbltool unbundle native
-- [x] pbltool list
 - [ ] pbltool serve
-- [x] Client API, native.
 - [ ] xegl: Use GLES2 or GL2, currently GL1 as an expedient.
 - [ ] Remaining Linux drivers: drmgx, bcm, asound, pulse
 - [ ] MacOS drivers.
@@ -39,18 +35,7 @@ Build cases:
 - - [ ] Native
 - - [ ] Web
 - [ ] Native: Persistence.
-- [x] Native isn't failing due to short pbl_client_rom. Is it even using that?
-- [x] Native: Am I setting PBL_BTN_CD when a keyboard is present? We're supposed to.
-- [x] Client-side utilities, in the demo project.
-- - [x] libc,libm
-- - [x] ROM access
-- - [x] Simple renderer
-- - [x] Simple synthesizer
-- - - xxx Punting this to the end of Lowrez 2024, since if pressed we can do without.
-- - - Actually, performance is questionable, I need to see how bad this gets. Do it.
-- - - [x] Clean up the two test songs.
-- - - [x] Sound effects. Need at least some kind of pitch bend.
-- - [x] Image decoder
 - [ ] Useful demo, expose all functionality.
 - [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
 - [ ] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)
+- [x] lofi: Terminate notes on song change. Don't drop hard, just reduce sustains to zero.
