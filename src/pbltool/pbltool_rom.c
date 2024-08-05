@@ -543,6 +543,8 @@ int pbltool_rom_encode(struct sr_encoder *dst,const struct pbltool_rom *rom) {
     if (sr_encode_raw(dst,res->serial,res->serialc)<0) return -1;
     rid++;
   }
+  // Terminator is not strictly required but it's helpful sometimes, if we get embedded somewhere.
+  if (sr_encode_u8(dst,0)<0) return -1;
   return 0;
 }
 

@@ -24,8 +24,9 @@ Build cases:
 
 - [ ] pbltool pack: User-defined resource compilers.
 - [x] pbltool bundle recompile
-- [ ] pbltool unbundle web
-- [ ] pbltool unbundle native
+- [x] pbltool unbundle web
+- [x] pbltool unbundle native
+- [ ] pbltool unbundle html: Capture icon from `<link>` if present.
 - [ ] pbltool serve
 - [ ] xegl: Use GLES2 or GL2, currently GL1 as an expedient.
 - [ ] Remaining Linux drivers: drmgx, bcm, asound, pulse
