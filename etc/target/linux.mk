@@ -27,7 +27,7 @@ ifneq (,$(strip $(filter glx xegl,$(linux_OPT_ENABLE))))
   endif
 endif
 
-linux_CC+=-I$(WAMR_SDK)/core/iwasm/include
+linux_CC+=-I$(WAMR_SDK)/core/iwasm/include 
 linux_LDPOST+=$(WAMR_SDK)/build/libvmlib.a -lpthread
 
 linux_SRCINCLUDE:=$(addprefix src/opt/,$(addsuffix /%,$(linux_OPT_ENABLE))) src/pblrt/%

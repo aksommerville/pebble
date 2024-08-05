@@ -25,6 +25,8 @@
 #define XEGL_KEY_REPEAT_INTERVAL 10
 #define XEGL_ICON_SIZE_LIMIT 64
 
+#define XEGL_FRAMEBUFFER_SIZE_LIMIT 4096
+
 struct pblrt_video_xegl {
   struct pblrt_video hdr;
   
@@ -54,6 +56,7 @@ struct pblrt_video_xegl {
   int focus;
   
   GLuint texid;
+  int texfilter;
 };
 
 #define DRIVER ((struct pblrt_video_xegl*)driver)

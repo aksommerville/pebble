@@ -12,6 +12,7 @@
 #if EXECFMT==WASM
 #include "wasm_c_api.h"
 #include "wasm_export.h"
+//#include "wasm_native.h"
 
 static struct pblrt_exec {
   wasm_module_t mod;
@@ -290,7 +291,8 @@ int pblrt_exec_update(double elapsed) {
     uint32_t argv[6]={0,0,pblrt.instate[0],pblrt.instate[1],pblrt.instate[2],pblrt.instate[3]};
     memcpy(argv,&elapsed,sizeof(double));
     if (wasm_runtime_call_wasm(pblrt_exec.ee,pblrt_exec.pbl_client_update,6,argv)) return 0;
-    fprintf(stderr,"%s: pbl_client_update failed hard\n",pblrt.romname);
+    const char *msg=wasm_runtime_get_exception(pblrt_exec.inst);
+    fprintf(stderr,"%s: pbl_client_update failed hard: %s\n",pblrt.romname,msg);
     return -2;
   
   #elif EXECFMT==NATIVE
@@ -318,7 +320,8 @@ int pblrt_exec_call_init() {
         return -2;
       }
     } else {
-      fprintf(stderr,"%s: pbl_client_init failed hard\n",pblrt.romname);
+      const char *msg=wasm_runtime_get_exception(pblrt_exec.inst);
+      fprintf(stderr,"%s: pbl_client_init failed hard: %s\n",pblrt.romname,msg);
       return -2;
     }
     return 0;
@@ -341,7 +344,8 @@ void pblrt_exec_call_quit() {
   #if EXECFMT==WASM
     uint32_t argv[1]={pblrt.termstatus};
     if (!wasm_runtime_call_wasm(pblrt_exec.ee,pblrt_exec.pbl_client_quit,1,argv)) {
-      fprintf(stderr,"%s: pbl_client_quit failed hard\n",pblrt.romname);
+      const char *msg=wasm_runtime_get_exception(pblrt_exec.inst);
+      fprintf(stderr,"%s: pbl_client_quit failed hard: %s\n",pblrt.romname,msg);
     }
     
   #elif EXECFMT==NATIVE
@@ -356,7 +360,8 @@ int pblrt_exec_call_render(void **fbpp) {
   #if EXECFMT==WASM
     uint32_t argv[1]={0};
     if (!wasm_runtime_call_wasm(pblrt_exec.ee,pblrt_exec.pbl_client_render,0,argv)) {
-      fprintf(stderr,"%s: pbl_client_render failed hard\n",pblrt.romname);
+      const char *msg=wasm_runtime_get_exception(pblrt_exec.inst);
+      fprintf(stderr,"%s: pbl_client_render failed hard: %s\n",pblrt.romname,msg);
       return -2;
     }
     if (argv[0]) {
@@ -397,6 +402,10 @@ int pblrt_exec_refill_audio() {
             return -2;
           }
         }
+      } else {
+        const char *msg=wasm_runtime_get_exception(pblrt_exec.inst);
+        fprintf(stderr,"%s: pbl_client_synth failed hard: %s\n",pblrt.romname,msg);
+        return -2;
       }
   
     #elif EXECFMT==NATIVE

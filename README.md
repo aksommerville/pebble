@@ -37,6 +37,10 @@ Build cases:
 - [x] Native: Persistence.
 - [ ] Native: Config file.
 - [ ] Useful demo, expose all functionality.
-- [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
+- [x] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
+- - We can at least log wasm_runtime_get_exception after the failures.
+- - wamr/core/iwasm/interpreter/wasm_runtime.c:check_linked_symbol: Adding a `return false` in the obvious place does produce the desired behavior.
+- - Changing WAMR is off the table, and there's no reasonable way to detect the missing link via WAMR's public API.
+- - With the extra logging after the call failure, I guess we can live with it.
 - [ ] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)
 - [x] lofi: Terminate notes on song change. Don't drop hard, just reduce sustains to zero.

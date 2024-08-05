@@ -303,22 +303,71 @@ static void xegl_suppress_screensaver(struct pblrt_video *driver) {
  */
 
 static int xegl_commit_framebuffer(struct pblrt_video *driver,const void *rgba,int w,int h) {
-  eglMakeCurrent(DRIVER->egldisplay,DRIVER->eglsurface,DRIVER->eglsurface,DRIVER->eglcontext);
+  if ((w<1)||(w>XEGL_FRAMEBUFFER_SIZE_LIMIT)) return -1;
+  if ((h<1)||(h>XEGL_FRAMEBUFFER_SIZE_LIMIT)) return -1;
   
-  //TODO Proper bounds, and black out the background if needed.
-  //TODO Use GLES2 instead of GL1.
+  eglMakeCurrent(DRIVER->egldisplay,DRIVER->eglsurface,DRIVER->eglsurface,DRIVER->eglcontext);
   glViewport(0,0,driver->w,driver->h);
   glBindTexture(GL_TEXTURE_2D,DRIVER->texid);
+  
+  /* If we're scaling down, take the largest possible space and filter linear.
+   * Scaling up at least 4x, take the largest possible space and filter nearest-neighbor.
+   * Between 1x and 4x, use the largest fitting multiple of framebuffer size, nearest-neighbor.
+   */
+  int dstw=0,dsth=0;
+  int xscale=driver->w/w;
+  int yscale=driver->h/h;
+  int scale=(xscale<yscale)?xscale:yscale;
+  if (scale<1) {
+    if (!DRIVER->texfilter) {
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+      DRIVER->texfilter=1;
+    }
+  } else {
+    if (DRIVER->texfilter) {
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+      DRIVER->texfilter=0;
+    }
+    if (scale<4) {
+      dstw=w*scale;
+      dsth=h*scale;
+    }
+  }
+  if (!dstw||!dsth) { // maximize
+    int wforh=(w*driver->h)/h;
+    if (wforh<=driver->w) {
+      dstw=wforh;
+      dsth=driver->h;
+    } else {
+      dstw=driver->w;
+      dsth=(driver->w*h)/w;
+    }
+  }
+  int dstx=(driver->w>>1)-(dstw>>1);
+  int dsty=(driver->h>>1)-(dsth>>1);
+  
+  if ((dstw<driver->w)||(dsth<driver->h)) {
+    glClearColor(0.0f,0.0f,0.0f,1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+  
+  //TODO Use GLES2 instead of GL1.
+  GLfloat r=(GLfloat)dstw/(GLfloat)driver->w;
+  GLfloat t=(GLfloat)dsth/(GLfloat)driver->h;
+  GLfloat l=-r; if (driver->w&1) l-=1.0f/(GLfloat)driver->w;
+  GLfloat b=-t; if (driver->h&1) b-=1.0f/(GLfloat)driver->h;
   glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba);
   glEnable(GL_TEXTURE_2D);
   glDisable(GL_BLEND);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2i(0,0); glVertex2f(-1.0f, 1.0f);
-    glTexCoord2i(0,1); glVertex2f(-1.0f,-1.0f);
-    glTexCoord2i(1,0); glVertex2f( 1.0f, 1.0f);
-    glTexCoord2i(1,1); glVertex2f( 1.0f,-1.0f);
+    glTexCoord2i(0,0); glVertex2f(l,t);
+    glTexCoord2i(0,1); glVertex2f(l,b);
+    glTexCoord2i(1,0); glVertex2f(r,t);
+    glTexCoord2i(1,1); glVertex2f(r,b);
   glEnd();
   
   eglSwapBuffers(DRIVER->egldisplay,DRIVER->eglsurface);
