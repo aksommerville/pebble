@@ -38,7 +38,8 @@ linux_ROMSRC_EMBEDDED:=$(linux_MIDDIR)/pblrt/pblrt_romsrc_embedded.o
 linux_ROMSRC_EXTERNAL:=$(linux_MIDDIR)/pblrt/pblrt_romsrc_external.o
 linux_EXEC_WASM:=$(linux_MIDDIR)/pblrt/pblrt_exec_wasm.o
 linux_EXEC_NATIVE:=$(linux_MIDDIR)/pblrt/pblrt_exec_native.o
-linux_OFILES_CONDITIONAL:=$(linux_ROMSRC_EMBEDDED) $(linux_ROMSRC_EXTERNAL) $(linux_EXEC_WASM) $(linux_EXEC_NATIVE)
+linux_EXEC_WASM2C:=$(linux_MIDDIR)/pblrt/pblrt_exec_wasm2c.o
+linux_OFILES_CONDITIONAL:=$(linux_ROMSRC_EMBEDDED) $(linux_ROMSRC_EXTERNAL) $(linux_EXEC_WASM) $(linux_EXEC_NATIVE) $(linux_EXEC_WASM2C)
   
 linux_SRCFILES:=$(filter $(linux_SRCINCLUDE),$(SRCFILES))
 linux_CFILES:=$(filter %.c,$(linux_SRCFILES))
@@ -50,6 +51,7 @@ $(linux_ROMSRC_EMBEDDED):src/pblrt/pblrt_romsrc.c;$(PRECMD) $(linux_CC) -o$@ $< 
 $(linux_ROMSRC_EXTERNAL):src/pblrt/pblrt_romsrc.c;$(PRECMD) $(linux_CC) -o$@ $< -DROMSRC=EXTERNAL
 $(linux_EXEC_WASM):src/pblrt/pblrt_exec.c;$(PRECMD) $(linux_CC) -o$@ $< -DEXECFMT=WASM
 $(linux_EXEC_NATIVE):src/pblrt/pblrt_exec.c;$(PRECMD) $(linux_CC) -o$@ $< -DEXECFMT=NATIVE
+$(linux_EXEC_WASM2C):src/pblrt/pblrt_exec.c;$(PRECMD) $(linux_CC) -o$@ $< -DEXECFMT=WASM2C -I$(WABT_SDK)/wasm2c
 
 # pebble: The general ROM file executor.
 linux_EXE_PEBBLE:=$(linux_OUTDIR)/pebble
@@ -68,6 +70,13 @@ linux_LIB_FAKE:=$(linux_OUTDIR)/libpebblefake.a
 linux-all:$(linux_LIB_FAKE)
 linux_OFILES_LIB_FAKE:=$(linux_OFILES) $(linux_ROMSRC_EMBEDDED) $(linux_EXEC_WASM)
 $(linux_LIB_FAKE):$(linux_OFILES_LIB_FAKE);$(PRECMD) $(linux_AR) rc $@ $^
+
+# libpebblewasm2c.a: Native wrapper using some WABT glue, so it can link against the output of `wasm2c`.
+linux_LIB_WASM2C:=$(linux_OUTDIR)/libpebblewasm2c.a
+linux-all:$(linux_LIB_WASM2C)
+linux_OFILES_LIB_WASM2C:=$(linux_OFILES) $(linux_ROMSRC_EMBEDDED) $(linux_EXEC_WASM2C) $(linux_MIDDIR)/pblrt/wasm-rt-impl.o $(linux_MIDDIR)/pblrt/wasm-rt-mem-impl.o
+$(linux_LIB_WASM2C):$(linux_OFILES_LIB_WASM2C);$(PRECMD) $(linux_AR) rc $@ $^
+$(linux_MIDDIR)/pblrt/%.o:$(WABT_SDK)/wasm2c/%.c;$(PRECMD) $(linux_CC) -o$@ $< -I$(WABT_SDK)/wasm2c -I$(WABT_SDK)/third_party/wasm-c-api/include
 
 ifeq ($(NATIVE_TARGET),linux)
 

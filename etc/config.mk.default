@@ -5,6 +5,10 @@
 # cmake .. -DWAMR_BUILD_INTERP=1 -DWAMR_BUILD_AOT=0 -DWAMR_BUILD_LIBC_BUILTIN=0 -DWAMR_BUILD_LIBC_WASI=0 -DWAMR_BUILD_FAST_INTERP=0
 WAMR_SDK:=/path/to/wasm-micro-runtime
 
+# https://github.com/WebAssembly/wabt
+# Required for `pbltool bundle --recompile`.
+WABT_SDK:=/path/to/wabt
+
 # Who are we building for?
 # You must build pbltool first, for everything else to work.
 # NATIVE_TARGET is the one TARGET that pbltool will use for bundling native programs.

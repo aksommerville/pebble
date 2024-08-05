@@ -23,7 +23,7 @@ Build cases:
 ## TODO
 
 - [ ] pbltool pack: User-defined resource compilers.
-- [ ] pbltool bundle recompile
+- [x] pbltool bundle recompile
 - [ ] pbltool unbundle web
 - [ ] pbltool unbundle native
 - [ ] pbltool serve

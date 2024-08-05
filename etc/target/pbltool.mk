@@ -9,8 +9,12 @@ pbltool_LATE_BINDING_DEFINES= \
   '-DPBL_LD="$($(NATIVE_TARGET)_LD)"' \
   '-DPBL_LDPOST="$($(NATIVE_TARGET)_LDPOST)"' \
   '-DPBL_CC="$($(NATIVE_TARGET)_CC)"'
+pbltool_IMMEDIATE_DEFINES:= \
+  '-DPBL_SDK="$(abspath .)"' \
+  '-DWABT_SDK="$(abspath $(WABT_SDK))"' \
+  '-DPBL_NATIVE_TARGET="$(NATIVE_TARGET)"'
 
-pbltool_CC+=$(patsubst %,-DUSE_%=1,$(pbltool_OPT_ENABLE)) '-DPBL_SDK="$(abspath .)"' '-DPBL_NATIVE_TARGET="$(NATIVE_TARGET)"'
+pbltool_CC+=$(patsubst %,-DUSE_%=1,$(pbltool_OPT_ENABLE)) $(pbltool_IMMEDIATE_DEFINES)
 pbltool_SRCINCLUDE:=$(addprefix src/opt/,$(addsuffix /%,$(pbltool_OPT_ENABLE))) src/pbltool/%
 pbltool_SRCFILES:=$(filter $(pbltool_SRCINCLUDE),$(SRCFILES))
 pbltool_CFILES:=$(filter %.c,$(pbltool_SRCFILES))

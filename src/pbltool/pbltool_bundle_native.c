@@ -26,6 +26,8 @@ struct pbltool_bundle_context {
   char *modrompath; // If we're rewriting the ROM. (ie true-native)
   char *asmpath; // Assembly bootstrap to incbin it.
   char *objpath; // Output of that assembly.
+  char *cpath; // Text from wasm2c.
+  char *cobjpath; // Compiled object from wasm2c.
 };
 
 static void pbltool_bundle_context_cleanup(struct pbltool_bundle_context *ctx) {
@@ -48,6 +50,19 @@ static void pbltool_bundle_context_cleanup(struct pbltool_bundle_context *ctx) {
     }
     free(ctx->objpath);
   }
+  if (ctx->cpath) {
+    //unlink(ctx->cpath);
+    free(ctx->cpath);
+  }
+  if (ctx->cobjpath) {
+    unlink(ctx->cobjpath);
+    int c=0; while (ctx->objpath[c]) c++;
+    if ((c>=2)&&!memcmp(ctx->objpath+c-2,".o",2)) {
+      ctx->objpath[c-1]='d';
+      unlink(ctx->objpath);
+    }
+    free(ctx->cobjpath);
+  }
 }
 
 /* Generate the 2 or 3 temporary paths.
@@ -65,12 +80,16 @@ static char *pbltool_path_append(const char *a,const char *b) {
   return c;
 }
  
-static int pbltool_bundle_prepare_paths(struct pbltool_bundle_context *ctx,const char *rompath,int need_mod) {
+static int pbltool_bundle_prepare_paths(struct pbltool_bundle_context *ctx,const char *rompath,int need_mod,int need_wasm2c) {
   if (need_mod) {
     if (!(ctx->modrompath=pbltool_path_append(rompath,".mod"))) return -1;
   }
   if (!(ctx->asmpath=pbltool_path_append(rompath,".s"))) return -1;
   if (!(ctx->objpath=pbltool_path_append(rompath,".o"))) return -1;
+  if (need_wasm2c) {
+    if (!(ctx->cpath=pbltool_path_append(rompath,".w2c.c"))) return -1;
+    if (!(ctx->cobjpath=pbltool_path_append(rompath,".w2c.o"))) return -1;
+  }
   return 0;
 }
 
@@ -154,7 +173,7 @@ int pbltool_bundle_true_lib(const char *dstpath,struct pbltool_rom *rom,const ch
   
   // Drop code:1 from rom and incbin it to a linkable object file.
   if (
-    ((err=pbltool_bundle_prepare_paths(&ctx,rompath,1))<0)||
+    ((err=pbltool_bundle_prepare_paths(&ctx,rompath,1,0))<0)||
     ((err=pbltool_bundle_rewrite_rom_without_code(&ctx,rom))<0)||
     ((err=pbltool_bundle_generate_asm(&ctx,rompath))<0)||
     ((err=pbltool_bundle_assemble(&ctx))<0)
@@ -176,13 +195,94 @@ int pbltool_bundle_true_lib(const char *dstpath,struct pbltool_rom *rom,const ch
   return 0;
 }
 
+/* Generate C text from the code resource, and unmangle some symbols.
+ */
+ 
+static int pbltool_bundle_wasm2c(struct pbltool_bundle_context *ctx,const char *wabt_sdk,struct pbltool_rom *rom,const char *rompath) {
+  const uint8_t *src=0;
+  int srcc=0;
+  const struct pbltool_res *res=rom->resv;
+  int i=rom->resc;
+  for (;i-->0;res++) {
+    if (res->tid!=PBL_TID_code) continue;
+    if (res->rid!=1) continue;
+    src=res->serial;
+    srcc=res->serialc;
+    break;
+  }
+  if (srcc<1) {
+    fprintf(stderr,"%s: code:1 not found!\n",rompath);
+    return -2;
+  }
+  
+  char cmd[1024];
+  int cmdc=snprintf(cmd,sizeof(cmd),"%s/bin/wasm2c - -o %s --module-name=mm",WABT_SDK,ctx->cpath);
+  if ((cmdc<1)||(cmdc>=sizeof(cmd))) return -1;
+  FILE *pipe=popen(cmd,"w");
+  if (!pipe) {
+    fprintf(stderr,"%s: Failed to open pipe for Wasm decompilation:\n%s\n",pbltool.exename,cmd);
+    return -2;
+  }
+  
+  int srcp=0;
+  while (srcp<srcc) {
+    int err=fwrite(src+srcp,1,srcc-srcp,pipe);
+    if (err<=0) {
+      fprintf(stderr,"%s: Writing to Wasm decompilation pipe failed:\n%s\n",pbltool.exename,cmd);
+      pclose(pipe);
+      return -2;
+    }
+    srcp+=err;
+  }
+  pclose(pipe);
+  
+  return pbltool_run_shell(
+    "%s -o%s %s -I%s/wasm2c -I%s/third_party/wasm-c-api/include",
+    PBL_CC,ctx->cobjpath,ctx->cpath,WABT_SDK,WABT_SDK
+  );
+}
+
 /* bundle true-native by recompiling code:1 to the host architecture.
  * This is a very interesting case, I'm not sure how possible it is.
  */
  
 int pbltool_bundle_true_recompile(const char *dstpath,struct pbltool_rom *rom,const char *rompath) {
-  fprintf(stderr,"%s TODO %s [%s:%d]\n",__func__,rompath,__FILE__,__LINE__);
-  return -2;
+  
+  const char *wabt_sdk=0;
+  #ifdef WABT_SDK
+    wabt_sdk=WABT_SDK;
+  #endif
+  if (!wabt_sdk||!wabt_sdk[0]) {
+    fprintf(stderr,"%s: Please recompile pbltool with WABT_SDK defined, to use `pbltool --recompile`.\n",pbltool.exename);
+    return -2;
+  }
+  
+  struct pbltool_bundle_context ctx={0};
+  int err;
+  
+  // Sundry prep work, and generate the assembled rom object file and the C text from code:1.
+  if (
+    ((err=pbltool_bundle_prepare_paths(&ctx,rompath,1,1))<0)||
+    ((err=pbltool_bundle_wasm2c(&ctx,wabt_sdk,rom,rompath))<0)|| // Must do before rewriting ROM.
+    ((err=pbltool_bundle_rewrite_rom_without_code(&ctx,rom))<0)||
+    ((err=pbltool_bundle_generate_asm(&ctx,rompath))<0)||
+    ((err=pbltool_bundle_assemble(&ctx))<0)
+  ) {
+    pbltool_bundle_context_cleanup(&ctx);
+    return err;
+  }
+  
+  // Compile and link it all.
+  if ((err=pbltool_run_shell(
+    "%s -o%s %s %s %s/out/%s/libpebblewasm2c.a %s",
+    PBL_LD,dstpath,ctx.objpath,ctx.cobjpath,PBL_SDK,PBL_NATIVE_TARGET,PBL_LDPOST
+  ))<0) {
+    pbltool_bundle_context_cleanup(&ctx);
+    return err;
+  }
+  
+  pbltool_bundle_context_cleanup(&ctx);
+  return 0;
 }
 
 /* bundle fake-native.
@@ -195,7 +295,7 @@ int pbltool_bundle_fake(const char *dstpath,const char *rompath) {
   // Shovel (rompath) into a linkable object file.
   // Alas with `objcopy` we can't control the object name to my satisfaction, so we use assembler instead.
   if (
-    ((err=pbltool_bundle_prepare_paths(&ctx,rompath,0))<0)||
+    ((err=pbltool_bundle_prepare_paths(&ctx,rompath,0,0))<0)||
     ((err=pbltool_bundle_generate_asm(&ctx,rompath))<0)||
     ((err=pbltool_bundle_assemble(&ctx))<0)
   ) {

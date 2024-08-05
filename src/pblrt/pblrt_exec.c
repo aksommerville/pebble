@@ -8,11 +8,11 @@
 
 #define WASM 1
 #define NATIVE 2
+#define WASM2C 3
 
 #if EXECFMT==WASM
 #include "wasm_c_api.h"
 #include "wasm_export.h"
-//#include "wasm_native.h"
 
 static struct pblrt_exec {
   wasm_module_t mod;
@@ -214,6 +214,176 @@ static NativeSymbol pblrt_exec_exports[]={
 // A lot of it is redundant in the WASM case, but not all.
 // It's tiny anyway, no worries to include.
 
+#elif EXECFMT==WASM2C
+
+#include "wasm-rt.h"
+
+struct w2c_env;
+
+typedef struct w2c_mm {
+  struct w2c_env* w2c_env_instance;
+  uint32_t w2c_0x5F_stack_pointer;
+  wasm_rt_memory_t w2c_memory;
+  wasm_rt_funcref_table_t w2c_0x5F_indirect_function_table;
+} w2c_mm;
+
+static struct pblrt_exec {
+  w2c_mm mod;
+} pblrt_exec={0};
+
+#define HOSTADDR(wasmaddr,len) (void*)(((wasmaddr)<=pblrt_exec.mod.w2c_memory.size-(len))?(pblrt_exec.mod.w2c_memory.data+(wasmaddr)):0)
+
+void wasm2c_mm_instantiate(w2c_mm* instance);
+void wasm2c_mm_free(w2c_mm* instance);
+void w2c_mm_pbl_client_quit(w2c_mm *mod,int termstatus);
+int w2c_mm_pbl_client_init(w2c_mm *mod,int fbw,int fbh,int rate,int chanc);
+void w2c_mm_pbl_client_update(w2c_mm *mod,double elapsed,int in1,int in2,int in3,int in4);
+uint32_t w2c_mm_pbl_client_render(w2c_mm *mod);
+uint32_t w2c_mm_pbl_client_synth(w2c_mm *mod,int c);
+
+void w2c_env_pbl_log(struct w2c_env *bother,uint32_t fmtp,uint32_t vargs) {
+  const char *fmt=HOSTADDR(fmtp,0);
+  if (!fmt) return;
+  char msg[256];
+  int msgc=0,err;
+  while (*fmt) {
+    if (*fmt!='%') {
+      if (msgc<sizeof(msg)) msg[msgc++]=*fmt;
+      fmt++;
+      continue;
+    }
+    fmt++;
+    #define RD32(name) \
+      int name=0; \
+      { \
+        const int *vp=HOSTADDR(vargs,4); \
+        if (vp) name=*vp; \
+      } \
+      vargs+=4;
+    switch (fmt[0]) {
+      case '%': if (msgc<sizeof(msg)) msg[msgc++]='%'; fmt++; break;
+      case 'd': {
+          fmt++;
+          RD32(v)
+          err=sr_decsint_repr(msg+msgc,sizeof(msg)-msgc,v);
+          if (msgc<=sizeof(msg)-err) msgc+=err;
+        } break;
+      case 'x': {
+          fmt++;
+          RD32(v)
+          err=sr_hexuint_repr(msg+msgc,sizeof(msg)-msgc,v,0,0);
+          if (msgc<=sizeof(msg)-err) msgc+=err;
+        } break;
+      case 's': {
+          fmt++;
+          RD32(p)
+          if (!p) break;
+          const char *src=HOSTADDR(p,0);
+          if (!src) break;
+          int srcc=0; while ((srcc<256)&&src[srcc]) srcc++;
+          if (msgc<=sizeof(msg)-srcc) {
+            memcpy(msg+msgc,src,srcc);
+            msgc+=srcc;
+          }
+        } break;
+      case 'f': {
+          fmt++;
+          if (vargs&4) vargs+=4;
+          double v=0.0;
+          const double *vp=HOSTADDR(vargs,8);
+          if (vp) v=*vp;
+          vargs+=8;
+          err=sr_double_repr(msg+msgc,sizeof(msg)-msgc,v);
+          if (msgc<=sizeof(msg)-err) msgc+=err;
+        } break;
+      case 'p': {
+          // 'p' for pointer, but not host pointers -- it's always 32 bits in wasm.
+          fmt++;
+          RD32(v)
+          if (msgc<=sizeof(msg)-10) {
+            msg[msgc++]='0';
+            msg[msgc++]='x';
+            msg[msgc++]="0123456789abcdef"[(v>>28)&15];
+            msg[msgc++]="0123456789abcdef"[(v>>24)&15];
+            msg[msgc++]="0123456789abcdef"[(v>>20)&15];
+            msg[msgc++]="0123456789abcdef"[(v>>16)&15];
+            msg[msgc++]="0123456789abcdef"[(v>>12)&15];
+            msg[msgc++]="0123456789abcdef"[(v>> 8)&15];
+            msg[msgc++]="0123456789abcdef"[(v>> 4)&15];
+            msg[msgc++]="0123456789abcdef"[(v    )&15];
+          }
+        } break;
+      case '.': {
+          if ((fmt[1]=='*')&&(fmt[2]=='s')) {
+            fmt+=3;
+            RD32(len)
+            if (len<0) len=0;
+            RD32(p)
+            if (p&&len) {
+              const char *src=HOSTADDR(p,len);
+              if (src) {
+                if (msgc<=sizeof(msg)-len) {
+                  memcpy(msg+msgc,src,len);
+                  msgc+=len;
+                }
+              }
+            }
+          } else {
+            if (msgc<sizeof(msg)) msg[msgc++]='%';
+          }
+        } break;
+      default: {
+          if (msgc<sizeof(msg)) msg[msgc++]='%';
+        }
+    }
+  }
+  fprintf(stderr,"GAME: %.*s\n",msgc,msg);
+}
+
+void w2c_env_pbl_terminate(struct w2c_env *bother,int status) {
+  pbl_terminate(status);
+}
+
+void w2c_env_pbl_set_synth_limit(struct w2c_env *bother,int samplec) {
+  pbl_set_synth_limit(samplec);
+}
+
+double w2c_env_pbl_now_real(struct w2c_env *bother) {
+  return pbl_now_real();
+}
+
+void w2c_env_pbl_now_local(struct w2c_env *bother,uint32_t dstp,int dsta) {
+  pbl_now_local(HOSTADDR(dstp,dsta*sizeof(int)),dsta);
+}
+
+int w2c_env_pbl_get_global_language(struct w2c_env *bother) {
+  return pbl_get_global_language();
+}
+
+void w2c_env_pbl_set_global_language(struct w2c_env *bother,int lang) {
+  pbl_set_global_language(lang);
+}
+
+int w2c_env_pbl_begin_input_config(struct w2c_env *bother,int playerid) {
+  return pbl_begin_input_config(playerid);
+}
+
+int w2c_env_pbl_store_get(struct w2c_env *bother,uint32_t vp,int va,uint32_t kp,int kc) {
+  return pbl_store_get(HOSTADDR(vp,va),va,HOSTADDR(kp,kc),kc);
+}
+
+int w2c_env_pbl_store_set(struct w2c_env *bother,uint32_t kp,int kc,uint32_t vp,int vc) {
+  return pbl_store_set(HOSTADDR(kp,kc),kc,HOSTADDR(vp,vc),vc);
+}
+
+int w2c_env_pbl_store_key_by_index(struct w2c_env *bother,uint32_t kp,int ka,int p) {
+  return pbl_store_key_by_index(HOSTADDR(kp,ka),ka,p);
+}
+
+int w2c_env_pbl_rom_get(struct w2c_env *bother,uint32_t dstp,int dsta) {
+  return pbl_rom_get(HOSTADDR(dstp,dsta),dsta);
+}
+
 #else
   #error "Please compile with either -DEXECFMT=WASM or -DEXECFMT=NATIVE."
 #endif
@@ -226,6 +396,9 @@ void pblrt_exec_quit() {
     if (pblrt_exec.ee) wasm_runtime_destroy_exec_env(pblrt_exec.ee);
     if (pblrt_exec.inst) wasm_runtime_deinstantiate(pblrt_exec.inst);
     if (pblrt_exec.mod) wasm_module_delete(&pblrt_exec.mod);
+  #elif EXECFMT==WASM2C
+    wasm2c_mm_free(&pblrt_exec.mod);
+    wasm_rt_free();
   #endif
 }
 
@@ -279,6 +452,10 @@ int pblrt_exec_init() {
     #undef LOADFN
   
   #elif EXECFMT==NATIVE
+  
+  #elif EXECFMT==WASM2C
+    wasm_rt_init();
+    wasm2c_mm_instantiate(&pblrt_exec.mod);
   #endif
   return 0;
 }
@@ -297,6 +474,10 @@ int pblrt_exec_update(double elapsed) {
   
   #elif EXECFMT==NATIVE
     pbl_client_update(elapsed,pblrt.instate[0],pblrt.instate[1],pblrt.instate[2],pblrt.instate[3]);
+    
+  #elif EXECFMT==WASM2C
+    w2c_mm_pbl_client_update(&pblrt_exec.mod,elapsed,pblrt.instate[0],pblrt.instate[1],pblrt.instate[2],pblrt.instate[3]);
+    
   #endif
   return 0;
 }
@@ -333,6 +514,15 @@ int pblrt_exec_call_init() {
       chanc=pblrt.audio->chanc;
     }
     return pbl_client_init(pblrt.fbw,pblrt.fbh,rate,chanc);
+    
+  #elif EXECFMT==WASM2C
+    int rate=0,chanc=0;
+    if (pblrt.audio) {
+      rate=pblrt.audio->rate;
+      chanc=pblrt.audio->chanc;
+    }
+    return w2c_mm_pbl_client_init(&pblrt_exec.mod,pblrt.fbw,pblrt.fbh,rate,chanc);
+    
   #endif
   return 0;
 }
@@ -350,6 +540,10 @@ void pblrt_exec_call_quit() {
     
   #elif EXECFMT==NATIVE
     pbl_client_quit(pblrt.termstatus);
+    
+  #elif EXECFMT==WASM2C
+    w2c_mm_pbl_client_quit(&pblrt_exec.mod,pblrt.termstatus);
+    
   #endif
 }
 
@@ -372,6 +566,9 @@ int pblrt_exec_call_render(void **fbpp) {
     }
   #elif EXECFMT==NATIVE
     *fbpp=pbl_client_render();
+  #elif EXECFMT==WASM2C
+    uint32_t fbp=w2c_mm_pbl_client_render(&pblrt_exec.mod);
+    if (fbp) *fbpp=HOSTADDR(fbp,0);
   #endif
   return 0;
 }
@@ -410,6 +607,9 @@ int pblrt_exec_refill_audio() {
   
     #elif EXECFMT==NATIVE
       src=pbl_client_synth(updc);
+    #elif EXECFMT==WASM2C
+      uint32_t p=w2c_mm_pbl_client_synth(&pblrt_exec.mod,updc);
+      if (p) src=HOSTADDR(p,0);
     #endif
     
     // When they return null, the strictly correct thing to do would be append zeroes to the buffer.
