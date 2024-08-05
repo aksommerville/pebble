@@ -10,7 +10,9 @@
 #if ROMSRC==EMBEDDED
   extern const unsigned char pbl_embedded_rom[];
   extern const int pbl_embedded_rom_size;
+  const int pblrt_romsrc_uses_external_rom=0;
 #elif ROMSRC==EXTERNAL
+  const int pblrt_romsrc_uses_external_rom=1;
 #else
   #error "Please compile with either -DROMSRC=EMBEDDED or -DROMSRC=EXTERNAL."
 #endif

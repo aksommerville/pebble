@@ -34,7 +34,8 @@ Build cases:
 - [ ] Live input config.
 - - [ ] Native
 - - [ ] Web
-- [ ] Native: Persistence.
+- [x] Native: Persistence.
+- [ ] Native: Config file.
 - [ ] Useful demo, expose all functionality.
 - [ ] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
 - [ ] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)

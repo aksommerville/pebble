@@ -4,13 +4,72 @@
  */
  
 void pblrt_print_usage() {
-  fprintf(stderr,"\nUsage: %s ROM [OPTIONS]\n\n",pblrt.exename);
+  if (pblrt_romsrc_uses_external_rom) {
+    fprintf(stderr,"\nUsage: %s ROM [OPTIONS]\n\n",pblrt.exename);
+  } else {
+    fprintf(stderr,"\nUsage: %s [OPTIONS]\n\n",pblrt.exename);
+  }
   fprintf(stderr,
     "Usually omitting all options yields sensible defaults:\n"
     "  --help                     Print this message and exit.\n"
+    "  --store=PATH               File for saved data. If empty, saving is disabled.\n"
+    "  --lang=ISO639              Force language. Overwrites environment variables.\n"
+    "  --video-driver=NAME        See below.\n"
+    "  --video-device=NAME        Depends on driver.\n"
+    "  --fullscreen=0|1           Start in fullscreen.\n"
+    "  --video-size=WxH           Initial window size.\n"
+    "  --audio-driver=NAME        See below.\n"
+    "  --audio-device=NAME        Depends on driver.\n"
+    "  --audio-rate=HZ            Preferred output rate.\n"
+    "  --audio-chanc=CHANNELS     Usually 1 or 2.\n"
+    "  --mono                     Alias for --audio-chanc=1.\n"
+    "  --stereo                   Alias for --audio-chanc=2.\n"
+    "  --audio-buffer=SAMPLES     Depends on driver.\n"
+    "  --input-driver=NAME        See below.\n"
     "\n"
   );
-  //TODO Driver options, and dynamically list drivers.
+  {
+    fprintf(stderr,"Video drivers:\n");
+    int p=0; for (;;p++) {
+      const struct pblrt_video_type *type=pblrt_video_type_by_index(p);
+      if (!type) break;
+      fprintf(stderr,"%15s : %s\n",type->name,type->desc);
+    }
+    fprintf(stderr,"\n");
+  }
+  {
+    fprintf(stderr,"Audio drivers:\n");
+    int p=0; for (;;p++) {
+      const struct pblrt_audio_type *type=pblrt_audio_type_by_index(p);
+      if (!type) break;
+      fprintf(stderr,"%15s : %s\n",type->name,type->desc);
+    }
+    fprintf(stderr,"\n");
+  }
+  {
+    fprintf(stderr,"Input drivers:\n");
+    int p=0; for (;;p++) {
+      const struct pblrt_input_type *type=pblrt_input_type_by_index(p);
+      if (!type) break;
+      fprintf(stderr,"%15s : %s\n",type->name,type->desc);
+    }
+    fprintf(stderr,"\n");
+  }
+}
+
+/* Set string.
+ */
+ 
+static int pblrt_configure_set_string(char **dstpp,const char *src,int srcc) {
+  char *nv=0;
+  if (srcc) {
+    if (!(nv=malloc(srcc+1))) return -1;
+    memcpy(nv,src,srcc);
+    nv[srcc]=0;
+  }
+  if (*dstpp) free(*dstpp);
+  *dstpp=nv;
+  return 0;
 }
 
 /* Receive key=value option.
@@ -32,13 +91,82 @@ static int pblrt_configure_kv(const char *k,int kc,const char *v,int vc) {
     }
   }
   
+  /* First pick off the oddballs.
+   */
+  
   if ((kc==4)&&!memcmp(k,"help",4)) {
     pblrt.terminate=1;
     pblrt_print_usage();
     return 0;
   }
   
-  //TODO Options
+  if ((kc==4)&&!memcmp(k,"lang",4)) {
+    if ((vc!=2)||(v[0]<'a')||(v[0]>'z')||(v[1]<'a')||(v[2]>'z')) {
+      fprintf(stderr,"%s: Expected 2-letter language code, found '%.*s'\n",pblrt.exename,vc,v);
+      return -2;
+    }
+    pblrt.lang=((v[0]-'a')<<5)|(v[1]-'a');
+    return 0;
+  }
+  
+  if ((kc==10)&&!memcmp(k,"video-size",10)) {
+    int i=0;
+    for (;i<vc;i++) if (v[i]=='x') {
+      int w,h;
+      if (
+        (sr_int_eval(&w,v,i)<2)||
+        (sr_int_eval(&h,v+i+1,vc-i-1)<2)||
+        (w<1)||(h<1)
+      ) break;
+      pblrt.video_w=w;
+      pblrt.video_h=h;
+      return 0;
+    }
+    fprintf(stderr,"%s: Invalid window size '%.*s'\n",pblrt.exename,vc,v);
+    return -2;
+  }
+  
+  if ((kc==4)&&!memcmp(k,"mono",4)) {
+    pblrt.audio_chanc=1;
+    return 0;
+  }
+  
+  if ((kc==6)&&!memcmp(k,"stereo",6)) {
+    pblrt.audio_chanc=2;
+    return 0;
+  }
+  
+  if ((kc==5)&&!memcmp(k,"store",5)) pblrt.autostore=0; // pass
+    
+  /* Every other option follows a pretty standard form.
+   */
+    
+  #define STROPT(optname,fldname) if ((kc==sizeof(optname)-1)&&!memcmp(k,optname,kc)) { \
+    return pblrt_configure_set_string(&pblrt.fldname,v,vc); \
+  }
+  #define INTOPT(optname,fldname) if ((kc==sizeof(optname)-1)&&!memcmp(k,optname,kc)) { \
+    int vn; \
+    if (sr_int_eval(&vn,v,vc)<2) { \
+      fprintf(stderr,"%s: Failed to evaluate '%.*s' as integer for option '%.*s'\n",pblrt.exename,vc,v,kc,k); \
+      return -2; \
+    } \
+    pblrt.fldname=vn; \
+    return 0; \
+  }
+  
+  STROPT("store",storepath)
+  STROPT("video-driver",video_driver)
+  STROPT("video-device",video_device)
+  INTOPT("fullscreen",fullscreen)
+  STROPT("audio-driver",audio_driver)
+  STROPT("audio-device",audio_device)
+  INTOPT("audio-rate",audio_rate)
+  INTOPT("audio-chanc",audio_chanc)
+  INTOPT("audio-buffer",audio_buffer)
+  STROPT("input-driver",input_driver)
+  
+  #undef STROPT
+  #undef INTOPT
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",pblrt.exename,kc,k,vc,v);
   return -2;
@@ -54,8 +182,7 @@ static int pblrt_configure_argv(int argc,char **argv) {
     if (!arg||!arg[0]) continue;
     
     if (arg[0]!='-') {
-      //TODO Jump right to _unexpected_ if we have an embedded ROM.
-      if (!pblrt.rompath) {
+      if (pblrt_romsrc_uses_external_rom&&!pblrt.rompath) {
         pblrt.rompath=arg;
       } else {
         goto _unexpected_;
@@ -93,6 +220,36 @@ static int pblrt_configure_argv(int argc,char **argv) {
   return 0;
 }
 
+/* Finish applying configuration.
+ */
+ 
+static int pblrt_configure_finish() {
+
+  // If they didn't supply '--store', make up a default.
+  if (pblrt.autostore&&!pblrt.storepath) {
+    if (pblrt_romsrc_uses_external_rom) {
+      if (pblrt.rompath) {
+        // We have an external ROM file. Append ".save" to its path.
+        int pfxc=0; while (pblrt.rompath[pfxc]) pfxc++;
+        int dstc=pfxc+5;
+        if (!(pblrt.storepath=malloc(dstc+1))) return -1;
+        memcpy(pblrt.storepath,pblrt.rompath,pfxc);
+        memcpy(pblrt.storepath+pfxc,".save",6); // sic 6, copy the terminator too
+      }
+    } else {
+      // If exename contains a slash, it is a path. Otherwise don't assume we can save there, and use the working directory instead.
+      // Actually, those end up being the same thing. So just append ".save" to exename.
+      int pfxc=0; while (pblrt.exename[pfxc]) pfxc++;
+      int dstc=pfxc+5;
+      if (!(pblrt.storepath=malloc(dstc+1))) return -1;
+      memcpy(pblrt.storepath,pblrt.exename,pfxc);
+      memcpy(pblrt.storepath+pfxc,".save",6); // sic 6, copy the terminator too
+    }
+  }
+
+  return 0;
+}
+
 /* Configure, main.
  */
  
@@ -100,8 +257,10 @@ int pblrt_configure(int argc,char **argv) {
   int err;
   if ((argc>=1)&&argv&&argv[0]&&argv[0][0]) pblrt.exename=argv[0];
   else pblrt.exename="pblrt";
+  pblrt.autostore=1;
+  //TODO Config file.
   if ((err=pblrt_configure_argv(argc,argv))<0) return err;
-  return 0;
+  return pblrt_configure_finish();
 }
 
 /* Fetch user languages from the environment.

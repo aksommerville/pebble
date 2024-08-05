@@ -19,6 +19,7 @@ extern struct pblrt {
   // pblrt_configure.c
   const char *exename;
   const char *rompath;
+  char *storepath; // If null after configure, saving is disabled.
   char *video_driver;
   char *video_device;
   int fullscreen;
@@ -30,6 +31,7 @@ extern struct pblrt {
   int audio_buffer;
   char *input_driver;
   int lang;
+  int autostore;
   
   // pblrt_romsrc.c
   const char *romname; // Prefer for logging, after pblrt_romsrc_init
@@ -65,6 +67,14 @@ extern struct pblrt {
   int abufp,abufc,abufa;
   int synth_limit;
   
+  /* We're heavy-handed about the persistence api.
+   * The store is held in memory as encoded JSON.
+   * Every access causes us to decode or re-encode it from scratch.
+   * TODO Consider more efficient strategies later, if it feels necessary.
+   * We do maintain the store even when it's not backed by a file.
+   */
+  struct sr_encoder store;
+  
 } pblrt;
 
 int pblrt_configure(int argc,char **argv);
@@ -73,6 +83,7 @@ int pblrt_choose_default_language(); // Lives with configure, but must defer unt
 
 int pblrt_romsrc_init();
 void pblrt_romsrc_quit();
+extern const int pblrt_romsrc_uses_external_rom;
 
 int pblrt_exec_init();
 void pblrt_exec_quit();
@@ -100,5 +111,7 @@ void pblrt_cb_disconnect(int devid);
 void pblrt_cb_button(int devid,int btnid,int value);
 
 void pblrt_lang_changed();
+
+void pblrt_load_store();
 
 #endif

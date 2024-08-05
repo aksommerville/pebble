@@ -5,8 +5,6 @@
  */
 
 #include "pblrt_internal.h"
-#include <time.h>
-#include <sys/time.h>
 
 #define WASM 1
 #define NATIVE 2
@@ -138,6 +136,8 @@ static void pbl_wasm_log(wasm_exec_env_t ee,const char *fmt,int vargs) {
 }
 
 /* Minor client entry points.
+ * Really trivial things, we'll implement inline.
+ * Where there's real behavior happening, just bridge to the native API entry points.
  */
 
 static void pbl_wasm_terminate(wasm_exec_env_t ee,int status) {
@@ -150,28 +150,15 @@ static void pbl_wasm_set_synth_limit(wasm_exec_env_t ee,int samplec) {
 }
 
 static double pbl_wasm_now_real(wasm_exec_env_t ee) {
-  struct timeval tv={0};
-  gettimeofday(&tv,0);
-  return (double)tv.tv_sec+(double)tv.tv_usec/1000000.0;
+  return pbl_now_real();
 }
 
 static void pbl_wasm_now_local(wasm_exec_env_t ee,int dstp,int dsta) {
   if (dsta<1) return;
-  time_t now=time(0);
-  struct tm *tm=localtime(&now);
-  if (!tm) return;
   if (dsta>7) dsta=7;
   int *dst=pblrt_exec_get_client_memory(dstp,4*dsta);
   if (!dst) return;
-  *dst++=1900+tm->tm_year; if (dsta<2) return;
-  *dst++=1+tm->tm_mon; if (dsta<3) return;
-  *dst++=tm->tm_mday; if (dsta<4) return;
-  *dst++=tm->tm_hour; if (dsta<5) return;
-  *dst++=tm->tm_min; if (dsta<6) return;
-  *dst++=tm->tm_sec; if (dsta<7) return;
-  struct timeval tv={0};
-  gettimeofday(&tv,0);
-  *dst=tv.tv_usec/1000;
+  pbl_now_local(dst,dsta);
 }
 
 static int pbl_wasm_get_global_language(wasm_exec_env_t ee) {
@@ -179,34 +166,23 @@ static int pbl_wasm_get_global_language(wasm_exec_env_t ee) {
 }
 
 static void pbl_wasm_set_global_language(wasm_exec_env_t ee,int lang) {
-  if (lang&~0x3ff) return;
-  char hi='a'+((lang>>5)&31);
-  char lo='a'+(lang&31);
-  if ((hi>'z')||(lo>'z')) return;
-  fprintf(stderr,"%s %d (%c%c)\n",__func__,lang,hi,lo);
-  if (lang==pblrt.lang) return;
-  pblrt.lang=lang;
-  pblrt_lang_changed();
+  pbl_set_global_language(lang);
 }
 
 static int pbl_wasm_begin_input_config(wasm_exec_env_t ee,int playerid) {
-  fprintf(stderr,"TODO %s %d\n",__func__,playerid);
-  return -1;
+  return pbl_begin_input_config(playerid);
 }
 
 static int pbl_wasm_store_get(wasm_exec_env_t ee,char *v,int va,const char *k,int kc) {
-  fprintf(stderr,"TODO %s '%.*s'\n",__func__,kc,k);
-  return 0;
+  return pbl_store_get(v,va,k,kc);
 }
 
 static int pbl_wasm_store_set(wasm_exec_env_t ee,const char *k,int kc,const char *v,int vc) {
-  fprintf(stderr,"TODO %s '%.*s' = '%.*s'\n",__func__,kc,k,vc,v);
-  return -1;
+  return pbl_store_set(k,kc,v,vc);
 }
 
 static int pbl_wasm_store_key_by_index(wasm_exec_env_t ee,char *k,int ka,int p) {
-  fprintf(stderr,"TODO %s %d\n",__func__,p);
-  return 0;
+  return pbl_store_key_by_index(k,ka,p);
 }
 
 static int pbl_wasm_rom_get(wasm_exec_env_t ee,void *dst,int dsta) {
@@ -233,91 +209,9 @@ static NativeSymbol pblrt_exec_exports[]={
 
 #elif EXECFMT==NATIVE
 
-#include <stdarg.h>
-
-void pbl_log(const char *fmt,...) {
-  // pbl_log() is a subset of printf(), so just use real printf since we have it.
-  va_list vargs;
-  va_start(vargs,fmt);
-  char msg[1024];
-  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-  if ((msgc<1)||(msgc>=sizeof(msg))) msgc=0;
-  fprintf(stderr,"GAME: %.*s\n",msgc,msg);
-}
-
-void pbl_terminate(int status) {
-  pblrt.terminate++;
-  pblrt.termstatus=(status<0)?1:status;
-}
-
-void pbl_set_synth_limit(int samplec) {
-  pblrt.synth_limit=samplec;
-}
-
-double pbl_now_real() {
-  struct timeval tv={0};
-  gettimeofday(&tv,0);
-  return (double)tv.tv_sec+(double)tv.tv_usec/1000000.0;
-}
-
-void pbl_now_local(int *dst,int dsta) {
-  if (!dst||(dsta<1)) return;
-  time_t now=time(0);
-  struct tm *tm=localtime(&now);
-  if (!tm) return;
-  if (dsta>7) dsta=7;
-  *dst++=1900+tm->tm_year; if (dsta<2) return;
-  *dst++=1+tm->tm_mon; if (dsta<3) return;
-  *dst++=tm->tm_mday; if (dsta<4) return;
-  *dst++=tm->tm_hour; if (dsta<5) return;
-  *dst++=tm->tm_min; if (dsta<6) return;
-  *dst++=tm->tm_sec; if (dsta<7) return;
-  struct timeval tv={0};
-  gettimeofday(&tv,0);
-  *dst=tv.tv_usec/1000;
-}
-
-int pbl_get_global_language() {
-  return pblrt.lang;
-}
-
-void pbl_set_global_language(int lang) {
-  if (lang&~0x3ff) return;
-  char hi='a'+((lang>>5)&31);
-  char lo='a'+(lang&31);
-  if ((hi>'z')||(lo>'z')) return;
-  fprintf(stderr,"%s %d (%c%c)\n",__func__,lang,hi,lo);
-  if (lang==pblrt.lang) return;
-  pblrt.lang=lang;
-  pblrt_lang_changed();
-}
-
-int pbl_begin_input_config(int playerid) {
-  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
-  return -1;
-}
-
-int pbl_store_get(char *v,int va,const char *k,int kc) {
-  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
-  return 0;
-}
-
-int pbl_store_set(const char *k,int kc,const char *v,int vc) {
-  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
-  return 0;
-}
-
-int pbl_store_key_by_index(char *k,int ka,int p) {
-  fprintf(stderr,"%s:%d: TODO %s\n",__FILE__,__LINE__,__func__);
-  return 0;
-}
-
-int pbl_rom_get(void *dst,int dsta) {
-  if (pblrt.romc<=dsta) {
-    memcpy(dst,pblrt.rom,pblrt.romc);
-  }
-  return pblrt.romc;
-}
+// The Pebble API with native linkage is included in all cases. (pblrt_exec_native_api.c)
+// A lot of it is redundant in the WASM case, but not all.
+// It's tiny anyway, no worries to include.
 
 #else
   #error "Please compile with either -DEXECFMT=WASM or -DEXECFMT=NATIVE."

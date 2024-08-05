@@ -70,6 +70,8 @@ int main(int argc,char **argv) {
   
   if (!pblrt.lang) pblrt.lang=pblrt_choose_default_language();
   
+  pblrt_load_store();
+  
   if ((err=pblrt_inmgr_init(&pblrt.inmgr))<0) {
     if (err!=-2) fprintf(stderr,"%s: Unspecified error loading input configuration.\n",pblrt.exename);
     return 1;
