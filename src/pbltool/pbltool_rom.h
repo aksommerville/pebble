@@ -29,6 +29,7 @@ void pbltool_rom_cleanup(struct pbltool_rom *rom);
  * ID conflicts across calls, the later one quietly wins.
  */
 int pbltool_rom_add_path(struct pbltool_rom *rom,const char *path);
+int pbltool_rom_add_archive(struct pbltool_rom *rom,const uint8_t *src,int srcc,const char *path);
 
 /* The resource list stays sorted at all times, and we don't allow conflict.
  */

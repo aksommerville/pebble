@@ -23,10 +23,7 @@ Build cases:
 ## TODO
 
 - [ ] pbltool pack: User-defined resource compilers.
-- [x] pbltool bundle recompile
-- [x] pbltool unbundle web
-- [x] pbltool unbundle native
-- [ ] pbltool unbundle html: Capture icon from `<link>` if present.
+- [x] pbltool unbundle html: Capture icon from `<link>` if present.
 - [ ] pbltool serve
 - [ ] xegl: Use GLES2 or GL2, currently GL1 as an expedient.
 - [ ] Remaining Linux drivers: drmgx, bcm, asound, pulse
@@ -35,13 +32,8 @@ Build cases:
 - [ ] Live input config.
 - - [ ] Native
 - - [ ] Web
-- [x] Native: Persistence.
 - [ ] Native: Config file.
+- [ ] Native: app icon
 - [ ] Useful demo, expose all functionality.
-- [x] Native: Can we make import errors from WAMR fatal? Right now they just dump to stderr and carry on.
-- - We can at least log wasm_runtime_get_exception after the failures.
-- - wamr/core/iwasm/interpreter/wasm_runtime.c:check_linked_symbol: Adding a `return false` in the obvious place does produce the desired behavior.
-- - Changing WAMR is off the table, and there's no reasonable way to detect the missing link via WAMR's public API.
-- - With the extra logging after the call failure, I guess we can live with it.
-- [ ] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)
-- [x] lofi: Terminate notes on song change. Don't drop hard, just reduce sustains to zero.
+- [x] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)
+- - https://github.com/aksommerville/upsy-downsy ; works pretty nice!

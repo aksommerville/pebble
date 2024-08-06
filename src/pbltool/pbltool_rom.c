@@ -194,7 +194,7 @@ static int pbltool_rom_add_directory(struct pbltool_rom *rom,const char *path) {
 /* Add ROM file.
  */
  
-static int pbltool_rom_add_archive(struct pbltool_rom *rom,const uint8_t *src,int srcc,const char *path) {
+int pbltool_rom_add_archive(struct pbltool_rom *rom,const uint8_t *src,int srcc,const char *path) {
   if ((srcc<8)||memcmp(src,"\x00\xffPBLROM",8)) return -1;
   int srcp=8,tid=1,rid=1,err;
   while (srcp<srcc) {
