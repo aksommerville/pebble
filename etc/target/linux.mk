@@ -1,7 +1,7 @@
 linux_MIDDIR:=mid/linux
 linux_OUTDIR:=out/linux
 
-linux_OPT_ENABLE+=fs strfmt serial hostio
+linux_OPT_ENABLE+=fs strfmt serial hostio image
 
 linux_CC+=$(patsubst %,-DUSE_%=1,$(linux_OPT_ENABLE))
 # Linux optional units: evdev, alsafd,asound,pulse, bcm,drmgx,glx,xegl
@@ -28,7 +28,7 @@ ifneq (,$(strip $(filter glx xegl,$(linux_OPT_ENABLE))))
 endif
 
 linux_CC+=-I$(WAMR_SDK)/core/iwasm/include 
-linux_LDPOST+=$(WAMR_SDK)/build/libvmlib.a -lpthread
+linux_LDPOST+=$(WAMR_SDK)/build/libvmlib.a -lpthread -lz
 
 linux_SRCINCLUDE:=$(addprefix src/opt/,$(addsuffix /%,$(linux_OPT_ENABLE))) src/pblrt/%
 

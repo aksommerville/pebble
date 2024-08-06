@@ -1,4 +1,5 @@
 #include "pblrt_internal.h"
+#include "opt/image/image.h"
 
 /* Quit.
  */
@@ -113,7 +114,19 @@ static int pblrt_drivers_gather_video_setup(struct pblrt_video_setup *setup) {
       const void *serial=0;
       int serialc=pblrt_rom_get(&serial,PBL_TID_image,rid);
       if (serialc>0) {
-        fprintf(stderr,"%s:%d:TODO: Load icon from %d bytes serial (image:%.*s)\n",__FILE__,__LINE__,serialc,srcc,src);//TODO
+        struct image *image=image_decode(serial,serialc);
+        if (!image) {
+          fprintf(stderr,"%s: Failed to decode app icon image:%.*s, %d bytes\n",pblrt.romname,srcc,src,serialc);
+        } else {
+          if (image_force_rgba(image)>=0) {
+            setup->iconrgba=image->v; // handoff, briefly
+            setup->iconw=image->w;
+            setup->iconh=image->h;
+            image->v=0;
+            image->w=image->h=0;
+          }
+          image_del(image);
+        } 
       }
     }
   }
@@ -140,8 +153,10 @@ static int pblrt_drivers_init_video() {
   if ((err=pblrt_drivers_gather_video_setup(&setup))<0) return err;
   if (!(pblrt.video=pblrt_drivers_init_1("video",pblrt_video_type_by_name,pblrt_video_type_by_index,pblrt_video_new,pblrt.video_driver,&delegate,&setup))) {
     fprintf(stderr,"%s: Failed to initialize any video driver.\n",pblrt.exename);
+    if (setup.iconrgba) free((void*)setup.iconrgba);
     return -2;
   }
+  if (setup.iconrgba) free((void*)setup.iconrgba);
   fprintf(stderr,"%s: Using video driver '%s'\n",pblrt.exename,pblrt.video->type->name);
   return 0;
 }
