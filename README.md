@@ -22,11 +22,7 @@ Build cases:
 
 ## TODO
 
-- [x] pbltool pack: User-defined resource compilers.
-- - I think we can skip this? Force clients to build up a secondary intermediate set if they need pre-processing.
-- [x] pbltool unbundle html: Capture icon from `<link>` if present.
 - [ ] pbltool serve
-- [ ] xegl: Use GLES2 or GL2, currently GL1 as an expedient.
 - [ ] Remaining Linux drivers: drmgx, bcm, asound, pulse
 - [ ] MacOS drivers.
 - [ ] Windows drivers.
@@ -34,7 +30,4 @@ Build cases:
 - - [ ] Native
 - - [ ] Web
 - [ ] Native: Config file.
-- [x] Native: app icon
 - [ ] Useful demo, expose all functionality.
-- [x] Try building a game outside the auspices of this repo. An entry for Lowrez Jam 2024, which happened to be starting at the right moment. :)
-- - https://github.com/aksommerville/upsy-downsy ; works pretty nice!

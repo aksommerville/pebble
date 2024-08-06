@@ -4,7 +4,7 @@
  */
 
 static void xegl_del(struct pblrt_video *driver) {
-  if (DRIVER->texid) glDeleteTextures(1,&DRIVER->texid);
+  xegl_render_cleanup(driver);
   eglDestroyContext(DRIVER->egldisplay,DRIVER->eglcontext);
   XCloseDisplay(DRIVER->dpy);
 }
@@ -163,7 +163,6 @@ static int xegl_init(struct pblrt_video *driver,const struct pblrt_video_setup *
   EGLAttrib egldpyattr[]={
     EGL_NONE,
   };
-  DRIVER->egldisplay=DRIVER->dpy; // ?
   if (!(DRIVER->egldisplay=eglGetPlatformDisplay(EGL_PLATFORM_X11_KHR,DRIVER->dpy,egldpyattr))) return -1;
   if (!eglInitialize(DRIVER->egldisplay,&DRIVER->version_major,&DRIVER->version_minor)) return -1;
   EGLint eglattribv[]={
@@ -174,9 +173,7 @@ static int xegl_init(struct pblrt_video *driver,const struct pblrt_video_setup *
     EGL_ALPHA_SIZE,       0,
     EGL_DEPTH_SIZE,      EGL_DONT_CARE,
     EGL_STENCIL_SIZE,    EGL_DONT_CARE,
-    //TODO Do use GLES2 ultimately, I think it's more widely compatible. Using GL 1 now because it's simpler to code.
-    //EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-    EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
     EGL_SURFACE_TYPE,    EGL_WINDOW_BIT|EGL_PIXMAP_BIT,
     EGL_NONE,
   };
@@ -184,7 +181,7 @@ static int xegl_init(struct pblrt_video *driver,const struct pblrt_video_setup *
   int eglcfgc=0;
   if (!eglChooseConfig(DRIVER->egldisplay,eglattribv,&eglconfig,1,&eglcfgc)) return -1;
   if (eglcfgc<1) return -1;
-  if (!eglBindAPI(EGL_OPENGL_API)) return -1;//TODO
+  if (!eglBindAPI(EGL_OPENGL_ES_API)) return -1;
   EGLint ctxattribv[]={
     EGL_CONTEXT_MAJOR_VERSION,2,
     EGL_CONTEXT_MINOR_VERSION,0,
@@ -242,17 +239,7 @@ static int xegl_init(struct pblrt_video *driver,const struct pblrt_video_setup *
   // Hide cursor.
   xegl_hide_cursor(driver);
   
-  // Init GX stuff.
-  glGenTextures(1,&DRIVER->texid);
-  if (!DRIVER->texid) {
-    glGenTextures(1,&DRIVER->texid);
-    if (!DRIVER->texid) return -1;
-  }
-  glBindTexture(GL_TEXTURE_2D,DRIVER->texid);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+  if (xegl_render_init(driver)<0) return -1;
   
   return 0;
 }
@@ -303,73 +290,8 @@ static void xegl_suppress_screensaver(struct pblrt_video *driver) {
  */
 
 static int xegl_commit_framebuffer(struct pblrt_video *driver,const void *rgba,int w,int h) {
-  if ((w<1)||(w>XEGL_FRAMEBUFFER_SIZE_LIMIT)) return -1;
-  if ((h<1)||(h>XEGL_FRAMEBUFFER_SIZE_LIMIT)) return -1;
-  
   eglMakeCurrent(DRIVER->egldisplay,DRIVER->eglsurface,DRIVER->eglsurface,DRIVER->eglcontext);
-  glViewport(0,0,driver->w,driver->h);
-  glBindTexture(GL_TEXTURE_2D,DRIVER->texid);
-  
-  /* If we're scaling down, take the largest possible space and filter linear.
-   * Scaling up at least 4x, take the largest possible space and filter nearest-neighbor.
-   * Between 1x and 4x, use the largest fitting multiple of framebuffer size, nearest-neighbor.
-   */
-  int dstw=0,dsth=0;
-  int xscale=driver->w/w;
-  int yscale=driver->h/h;
-  int scale=(xscale<yscale)?xscale:yscale;
-  if (scale<1) {
-    if (!DRIVER->texfilter) {
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-      DRIVER->texfilter=1;
-    }
-  } else {
-    if (DRIVER->texfilter) {
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-      DRIVER->texfilter=0;
-    }
-    if (scale<4) {
-      dstw=w*scale;
-      dsth=h*scale;
-    }
-  }
-  if (!dstw||!dsth) { // maximize
-    int wforh=(w*driver->h)/h;
-    if (wforh<=driver->w) {
-      dstw=wforh;
-      dsth=driver->h;
-    } else {
-      dstw=driver->w;
-      dsth=(driver->w*h)/w;
-    }
-  }
-  int dstx=(driver->w>>1)-(dstw>>1);
-  int dsty=(driver->h>>1)-(dsth>>1);
-  
-  if ((dstw<driver->w)||(dsth<driver->h)) {
-    glClearColor(0.0f,0.0f,0.0f,1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-  }
-  
-  //TODO Use GLES2 instead of GL1.
-  GLfloat r=(GLfloat)dstw/(GLfloat)driver->w;
-  GLfloat t=(GLfloat)dsth/(GLfloat)driver->h;
-  GLfloat l=-r; if (driver->w&1) l-=1.0f/(GLfloat)driver->w;
-  GLfloat b=-t; if (driver->h&1) b-=1.0f/(GLfloat)driver->h;
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba);
-  glEnable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2i(0,0); glVertex2f(l,t);
-    glTexCoord2i(0,1); glVertex2f(l,b);
-    glTexCoord2i(1,0); glVertex2f(r,t);
-    glTexCoord2i(1,1); glVertex2f(r,b);
-  glEnd();
-  
+  if (xegl_render_commit(driver,rgba,w,h)<0) return -1;
   eglSwapBuffers(DRIVER->egldisplay,DRIVER->eglsurface);
   return 0;
 }

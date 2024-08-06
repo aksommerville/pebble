@@ -15,7 +15,7 @@
 #include <X11/keysym.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GL/gl.h>
+#include <GLES2/gl2.h>
 
 #if USE_xinerama
   #include <X11/extensions/Xinerama.h>
@@ -57,11 +57,19 @@ struct pblrt_video_xegl {
   
   GLuint texid;
   int texfilter;
+  GLint program;
+  GLuint u_screensize,u_sampler;
+  int dstx,dsty,dstw,dsth;
+  int dstww,dstwh,dstfw,dstfh;
 };
 
 #define DRIVER ((struct pblrt_video_xegl*)driver)
 
 int xegl_update(struct pblrt_video *driver);
 int xegl_usb_usage_from_keysym(int keysym);
+
+void xegl_render_cleanup(struct pblrt_video *driver);
+int xegl_render_init(struct pblrt_video *driver);
+int xegl_render_commit(struct pblrt_video *driver,const void *fb,int fbw,int fbh);
 
 #endif
