@@ -16,3 +16,7 @@ body {
   font-family: monospace;
   white-space: pre;
 }
+
+canvas {
+  cursor: none;
+}
