@@ -57,6 +57,7 @@ extern struct pblrt {
   double starttime_cpu;
   int framec;
   int clock_faultc;
+  int hardpause;
   
   /* Circular audio buffer.
    * Driver requests audio on its own time, typically from a background thread.

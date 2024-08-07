@@ -8,11 +8,17 @@ void pblrt_cb_close() {
 }
 
 void pblrt_cb_focus(int focus) {
-  // We have the option here of suspending play while the window is unfocussed.
-  // Steam chided me once for not doing that.
-  // But I disagree! If the user wanted to pause, they would pause.
-  // Switching to some other window to take notes or something, that's not a request to pause.
-  // Anyhoo, we can revisit this at any time.
+  if (!focus) {
+    if (!pblrt.hardpause) {
+      pblrt.hardpause=1;
+      pblrt_audio_play(0);
+    }
+  } else {
+    if (pblrt.hardpause) {
+      pblrt.hardpause=0;
+      pblrt_audio_play(1);
+    }
+  }
 }
 
 void pblrt_cb_key(int keycode,int value) {

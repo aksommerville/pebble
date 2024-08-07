@@ -102,6 +102,7 @@ int main(int argc,char **argv) {
       pblrt.termstatus=1;
       break;
     }
+    if (pblrt.hardpause) continue;
     if ((err=pblrt_exec_update(elapsed))<0) {
       if (err!=-2) fprintf(stderr,"%s: Unspecified error updating game.\n",pblrt.romname);
       pblrt.termstatus=1;
