@@ -5,8 +5,8 @@
 
 static void xegl_del(struct pblrt_video *driver) {
   xegl_render_cleanup(driver);
-  eglDestroyContext(DRIVER->egldisplay,DRIVER->eglcontext);
-  XCloseDisplay(DRIVER->dpy);
+  if (DRIVER->eglcontext) eglDestroyContext(DRIVER->egldisplay,DRIVER->eglcontext);
+  if (DRIVER->dpy) XCloseDisplay(DRIVER->dpy);
 }
 
 /* Estimate monitor size.

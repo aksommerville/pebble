@@ -1,4 +1,6 @@
 #include "pblrt_internal.h"
+#include <sys/poll.h>
+#include <unistd.h>
 
 /* Dispatch signal.
  */
@@ -181,6 +183,25 @@ int pblrt_inmgr_key(struct pblrt_inmgr *inmgr,int keycode,int value) {
   } else {
     if (!(pblrt.instate[0]&keymap->btnid)) return 0;
     pblrt.instate[0]&=~keymap->btnid;
+  }
+  return 0;
+}
+
+/* Update.
+ * The real meat-and-potatoes of what we do is driven by event callbacks.
+ * This update is only for polling stdin -- it's possible that we're not getting events from anywhere else,
+ * and there must always be a way to quit.
+ */
+ 
+int pblrt_inmgr_update(struct pblrt_inmgr *inmgr) {
+  if (!inmgr->got_stdin) return 0;
+  struct pollfd pollfd={.fd=STDIN_FILENO,.events=POLLIN};
+  if (poll(&pollfd,1,0)<=0) return 0;
+  uint8_t buf[64];
+  int bufc=read(STDIN_FILENO,buf,sizeof(buf));
+  if (bufc<=0) return 0;
+  if ((bufc==1)&&(buf[0]==0x1b)) {
+    pblrt.terminate=1;
   }
   return 0;
 }

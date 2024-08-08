@@ -24,6 +24,11 @@ Build cases:
 
 - [ ] pbltool serve
 - [ ] Remaining Linux drivers: drmgx, bcm, asound, pulse
+- - [x] drmgx
+- - [ ] bcm
+- - [ ] asound
+- - [ ] pulse
+- - [x] Need a reliable means of quitting, for the bcm and drmgx builds! Both joystick and keyboard.
 - [ ] MacOS drivers.
 - [ ] Windows drivers.
 - [ ] Live input config.

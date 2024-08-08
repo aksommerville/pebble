@@ -1,5 +1,6 @@
 #include "evdev_internal.h"
 #include "pebble/pebble.h"
+#include "pblrt/pblrt_inmgr.h"
 
 /* Guess Pebble buttons from Linux buttons.
  * Linux does its own -- usually incorrect -- mapping to logical symbols.
@@ -36,6 +37,8 @@ int evdev_guess_pblbtnid(int type,int code) {
         case BTN_SELECT: return PBL_BTN_AUX2;
         case BTN_START: return PBL_BTN_AUX1;
         case BTN_MODE: return PBL_BTN_AUX3;
+        case BTN_THUMBL: return PBLRT_SIGNAL_QUIT;
+        case BTN_THUMBR: return PBLRT_SIGNAL_SCREENCAP;
       } break;
   }
   return 0;

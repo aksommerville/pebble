@@ -102,6 +102,11 @@ int main(int argc,char **argv) {
       pblrt.termstatus=1;
       break;
     }
+    if ((err=pblrt_inmgr_update(&pblrt.inmgr))<0) {
+      if (err!=-2) fprintf(stderr,"%s: Unspecified error updating input manager.\n",pblrt.exename);
+      pblrt.termstatus=1;
+      break;
+    }
     if (pblrt.hardpause) continue;
     if ((err=pblrt_exec_update(elapsed))<0) {
       if (err!=-2) fprintf(stderr,"%s: Unspecified error updating game.\n",pblrt.romname);

@@ -5,6 +5,8 @@
 #ifndef PBLRT_INMGR_H
 #define PBLRT_INMGR_H
 
+#include <termios.h>
+
 /* Fake input buttons that operate as stateless signals.
  * These are only valid for TWOSTATE buttons and keyboard keys.
  */
@@ -74,9 +76,13 @@ struct pblrt_inmgr {
   int tmc,tma;
   struct pblrt_inmgr_keymap *keymapv;
   int keymapc,keymapa;
+  struct termios tios_restore;
+  int got_stdin;
 };
 
 int pblrt_inmgr_init(struct pblrt_inmgr *inmgr);
+
+int pblrt_inmgr_update(struct pblrt_inmgr *inmgr);
 
 int pblrt_inmgr_add_device(struct pblrt_inmgr *inmgr,int devid);
 int pblrt_inmgr_remove_device(struct pblrt_inmgr *inmgr,int devid);

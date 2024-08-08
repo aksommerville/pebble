@@ -1,4 +1,5 @@
 #include "pblrt_internal.h"
+#include <unistd.h>
 
 /* Default keyboard map.
  */
@@ -87,6 +88,15 @@ static int pblrt_inmgr_generate_default_keymap(struct pblrt_inmgr *inmgr) {
   return 0;
 }
 
+/* Restore termios for stdin.
+ */
+ 
+static void pblrt_restore_stdin() {
+  if (pblrt.inmgr.got_stdin) {
+    tcsetattr(STDIN_FILENO,TCSANOW,&pblrt.inmgr.tios_restore);
+  }
+}
+
 /* Init.
  */
  
@@ -97,6 +107,17 @@ int pblrt_inmgr_init(struct pblrt_inmgr *inmgr) {
   if (!inmgr->keymapc) {
     if (pblrt_inmgr_generate_default_keymap(inmgr)<0) return -1;
   }
+  
+  // Drop stdin out of canonical mode so we can poll it for keystrokes.
+  if (tcgetattr(STDIN_FILENO,&inmgr->tios_restore)>=0) {
+    struct termios termios=inmgr->tios_restore;
+    termios.c_lflag&=~(ICANON|ECHO);
+    if (tcsetattr(STDIN_FILENO,TCSANOW,&termios)>=0) {
+      inmgr->got_stdin=1;
+      atexit(pblrt_restore_stdin);
+    }
+  }
+  
   return 0;
 }
 

@@ -20,6 +20,10 @@ endif
 ifneq (,$(strip $(filter drmgx xegl,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lEGL
 endif
+ifneq (,$(strip $(filter drmgx,$(linux_OPT_ENABLE))))
+  linux_LDPOST+=-ldrm -lgbm
+  linux_CC+=-I/usr/include/libdrm
+endif
 ifneq (,$(strip $(filter glx xegl,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lX11
   ifneq (,$(strip $(filter xinerama,$(linux_OPT_ENABLE))))

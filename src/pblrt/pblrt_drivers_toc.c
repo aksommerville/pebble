@@ -6,7 +6,7 @@
  */
 extern const struct pblrt_video_type pblrt_video_type_dummy;
 extern const struct pblrt_video_type pblrt_video_type_xegl;
-extern const struct pblrt_video_type pblrt_video_type_drmgx;//TODO
+extern const struct pblrt_video_type pblrt_video_type_drmgx;
 extern const struct pblrt_video_type pblrt_video_type_bcm;//TODO
 extern const struct pblrt_video_type pblrt_video_type_mswm;//TODO
 extern const struct pblrt_video_type pblrt_video_type_macwm;//TODO
@@ -28,6 +28,9 @@ extern const struct pblrt_input_type pblrt_input_type_machid;//TODO
 static const struct pblrt_video_type *pblrt_video_typev[]={
 #if USE_xegl
   &pblrt_video_type_xegl,
+#endif
+#if USE_drmgx
+  &pblrt_video_type_drmgx,
 #endif
   &pblrt_video_type_dummy,
 };
