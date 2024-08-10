@@ -7,7 +7,7 @@
 extern const struct pblrt_video_type pblrt_video_type_dummy;
 extern const struct pblrt_video_type pblrt_video_type_xegl;
 extern const struct pblrt_video_type pblrt_video_type_drmgx;
-extern const struct pblrt_video_type pblrt_video_type_bcm;//TODO
+extern const struct pblrt_video_type pblrt_video_type_bcm;
 extern const struct pblrt_video_type pblrt_video_type_mswm;//TODO
 extern const struct pblrt_video_type pblrt_video_type_macwm;//TODO
 extern const struct pblrt_audio_type pblrt_audio_type_dummy;
@@ -31,6 +31,9 @@ static const struct pblrt_video_type *pblrt_video_typev[]={
 #endif
 #if USE_drmgx
   &pblrt_video_type_drmgx,
+#endif
+#if USE_bcm
+  &pblrt_video_type_bcm,
 #endif
   &pblrt_video_type_dummy,
 };
