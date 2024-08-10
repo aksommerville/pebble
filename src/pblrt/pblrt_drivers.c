@@ -191,6 +191,8 @@ static int pblrt_drivers_init_audio() {
     .chanc=pblrt.audio_chanc,
     .buffer=pblrt.audio_buffer,
   };
+  if (!setup.rate) setup.rate=44100;
+  if (!setup.chanc) setup.chanc=2;
   if (!(pblrt.audio=pblrt_drivers_init_1("audio",pblrt_audio_type_by_name,pblrt_audio_type_by_index,pblrt_audio_new,pblrt.audio_driver,&delegate,&setup))) {
     fprintf(stderr,"%s: Failed to initialize any audio driver. Proceeding without audio.\n",pblrt.exename);
   } else {

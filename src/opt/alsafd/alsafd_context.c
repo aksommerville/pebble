@@ -177,9 +177,10 @@ static int alsafd_configure_device(
   /* Default buffer size to something shorter than s/60.
    * We need very small buffers because Pebble's upper layers are introducing some latency of their own.
    * At 44100 Hz, 512 frames yields about 86 Hz. Unfortunately, we don't usually know the final rate yet.
+   * 1024 worked ok on my Nuc. On Pi 1, had to bump to 2048.
    */
   if (!setup||(setup->buffer<1)) {
-    int bufsize=1024;
+    int bufsize=2048;
     alsafd_hw_params_set_nearest_interval(&hwparams,SNDRV_PCM_HW_PARAM_BUFFER_SIZE,bufsize);
   }
 
@@ -229,8 +230,9 @@ static int alsafd_configure_device(
     .silence_threshold=DRIVER->hwbufframec,
     .silence_size=0,
     .boundary=DRIVER->hwbufframec,
-    .proto=DRIVER->protocol_version,
-    .tstamp_type=SNDRV_PCM_TSTAMP_NONE,
+    // My Pi 1 doesn't have these two fields:
+    //.proto=DRIVER->protocol_version,
+    //.tstamp_type=SNDRV_PCM_TSTAMP_NONE,
   };
   if (ioctl(DRIVER->fd,SNDRV_PCM_IOCTL_SW_PARAMS,&swparams)<0) {
     return alsafd_error(driver,"SNDRV_PCM_IOCTL_SW_PARAMS",0);

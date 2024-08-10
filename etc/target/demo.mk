@@ -18,11 +18,15 @@ $(demo_CODE1):$(demo_OFILES);$(PRECMD) $(demo_LD) -o$@ $^ $(demo_LDPOST)
 
 demo_DATAFILES:=$(filter src/demo/data/%,$(demo_SRCFILES))
 demo_DATADIRS:=$(sort $(dir $(demo_DATAFILES)))
+ifneq (,$(WAMR_SDK))
+# If no WAMR, we'll still build a ROM but without code:1, so it's not valid without accompanying native code.
 demo_DATAFILES+=$(demo_CODE1)
+demo_PACK_INPUTS:=$(demo_MIDDIR)/data
+endif
 
 demo_ROM:=$(demo_OUTDIR)/demo.pbl
 demo-all:$(demo_ROM)
-$(demo_ROM):$(demo_DATAFILES) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) pack -o$@ src/demo/data $(demo_MIDDIR)/data
+$(demo_ROM):$(demo_DATAFILES) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) pack -o$@ src/demo/data $(demo_PACK_INPUTS)
 
 demo_HTML:=$(demo_OUTDIR)/demo.html
 demo-all:$(demo_HTML)

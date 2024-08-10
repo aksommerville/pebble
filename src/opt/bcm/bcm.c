@@ -34,20 +34,26 @@ static int _bcm_init(struct pblrt_video *driver,const struct pblrt_video_setup *
   graphics_get_display_size(0,&screenw,&screenh);
   if ((screenw<1)||(screenh<1)) return -1;
   if ((screenw>4096)||(screenh>4096)) return -1;
+  driver->w=screenw;
+  driver->h=screenh;
 
   if (!(DRIVER->vcdisplay=vc_dispmanx_display_open(0))) return -1;
   if (!(DRIVER->vcupdate=vc_dispmanx_update_start(0))) return -1;
 
-  int logw=screenw-80;
-  int logh=screenh-50;
-  VC_RECT_T srcr={0,0,screenw<<16,screenh<<16};
+  int xscale=screenw/setup->fbw;
+  int yscale=screenh/setup->fbh;
+  int scale=(xscale<yscale)?xscale:yscale;
+  if (scale<1) scale=1;
+  int logw=setup->fbw*scale;
+  int logh=setup->fbh*scale;
+  VC_RECT_T srcr={0,0,setup->fbw<<16,setup->fbh<<16};
   VC_RECT_T dstr={(screenw>>1)-(logw>>1),(screenh>>1)-(logh>>1),logw,logh};
 
   DRIVER->fbw=setup->fbw;
   DRIVER->fbh=setup->fbh;
   if (!(DRIVER->fb=malloc(setup->fbw*setup->fbh*4))) return -1;
   if (!(DRIVER->vcresource=vc_dispmanx_resource_create(
-    VC_IMAGE_XBGR8888,setup->fbw,setup->fbh,DRIVER->fb
+    VC_IMAGE_RGBX32,setup->fbw,setup->fbh,DRIVER->fb
   ))) return -1;
 
   VC_DISPMANX_ALPHA_T alpha={DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS,0xffffffff};
@@ -59,6 +65,10 @@ static int _bcm_init(struct pblrt_video *driver,const struct pblrt_video_setup *
 
   if (vc_dispmanx_vsync_callback(DRIVER->vcdisplay,_bcm_cb_vsync,driver)<0) return -1;
 
+  //XXX The straight-framebuffer approach kind of worked but unsatisfactory for two reasons:
+  // 1. It appears to require a multiple of 8 width.
+  // 2. Linear interpolation that we can't turn off.
+  // Restore all this EGL code, and bring in the shaders from xegl or drmgx
   #if 0 /* just for shits and giggles, i want to try with a raw framebuffer first */
   VC_DISPMANX_ALPHA_T alpha={DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS,0xffffffff};
   if (!(DRIVER->vcelement=vc_dispmanx_element_add(
@@ -117,9 +127,14 @@ static int _bcm_init(struct pblrt_video *driver,const struct pblrt_video_setup *
 static int _bcm_commit_framebuffer(struct pblrt_video *driver,const void *fb,int fbw,int fbh) {
   if (!fb||(fbw!=DRIVER->fbw)||(fbh!=DRIVER->fbh)) return 0;
   int seq=DRIVER->vsync_seq;
-  //memcpy(DRIVER->fb,fb,fbw*fbh*4);
+
+  memcpy(DRIVER->fb,fb,fbw*fbh*4);
+  uint32_t *p=DRIVER->fb;
+  int i=fbw*fbh;
+  //for (;i-->0;p++) (*p)&=0x00ffffff;
+
   VC_RECT_T fbr={0,0,fbw,fbh};
-  vc_dispmanx_resource_write_data(DRIVER->vcresource,VC_IMAGE_XBGR8888,fbw<<2,fb,&fbr);
+  vc_dispmanx_resource_write_data(DRIVER->vcresource,VC_IMAGE_RGBX32,fbw<<2,DRIVER->fb,&fbr);
   int panic=100;
   while ((DRIVER->vsync_seq==seq)&&(panic-->0)) {
     usleep(1000);

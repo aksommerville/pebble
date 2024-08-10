@@ -11,7 +11,8 @@
 //aks
 #define Z_SOLO 1
 #define HAVE_MEMCPY 1
-void *memcpy(void*,const void*,unsigned long);
+#include <string.h>
+//void *memcpy(void*,const void*,size_t);
 
 /*
  * If you *really* need a unique prefix for all types and library functions,

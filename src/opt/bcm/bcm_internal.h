@@ -13,7 +13,7 @@ struct pblrt_video_bcm {
   DISPMANX_RESOURCE_HANDLE_T vcresource;// For framebuffer only.
   DISPMANX_ELEMENT_HANDLE_T vcelement;
   DISPMANX_UPDATE_HANDLE_T vcupdate;
-  int vsync_seq;
+  volatile int vsync_seq;
   void *fb;
   int fbw,fbh;
   #if 0
@@ -25,6 +25,6 @@ struct pblrt_video_bcm {
   #endif
 };
 
-#define DRIVER ((struct pblrt_video_bcm*)video)
+#define DRIVER ((struct pblrt_video_bcm*)driver)
 
 #endif
