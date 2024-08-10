@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include "pblrt/pblrt_drivers.h"
 
+#define BCM_FRAMEBUFFER_SIZE_LIMIT 4096
+
 struct pblrt_video_bcm {
   struct pblrt_video hdr;
   DISPMANX_DISPLAY_HANDLE_T vcdisplay;
@@ -21,6 +23,10 @@ struct pblrt_video_bcm {
   GLint program;
   GLuint texid;
   int texfilter;
+  GLint u_screensize;
+  GLint u_sampler;
+  int dstx,dsty,dstw,dsth;
+  int dstww,dstwh,dstfw,dstfh;
 };
 
 #define DRIVER ((struct pblrt_video_bcm*)driver)

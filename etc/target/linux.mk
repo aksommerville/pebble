@@ -12,12 +12,12 @@ ifneq (,$(strip $(filter pulse,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lpulse-simple
 endif
 ifneq (,$(strip $(filter bcm,$(linux_OPT_ENABLE))))
-  linux_LDPOST+=-L/opt/vc/lib -lbcm_host
+  linux_LDPOST+=-L/opt/vc/lib -lbcm_host -lGLESv2
 endif
 ifneq (,$(strip $(filter drmgx glx xegl,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lGL
 endif
-ifneq (,$(strip $(filter drmgx xegl,$(linux_OPT_ENABLE))))
+ifneq (,$(strip $(filter bcm drmgx xegl,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lEGL
 endif
 ifneq (,$(strip $(filter drmgx,$(linux_OPT_ENABLE))))

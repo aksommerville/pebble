@@ -90,6 +90,8 @@ static int bcm_render_program_init(
   if (!pid) return 0;
   if (bcm_render_program_compile(driver,pid,GL_VERTEX_SHADER,vsrc,vsrcc)<0) return 0;
   if (bcm_render_program_compile(driver,pid,GL_FRAGMENT_SHADER,fsrc,fsrcc)<0) return 0;
+  glBindAttribLocation(pid,0,"apos");
+  glBindAttribLocation(pid,1,"atexcoord");
   glLinkProgram(pid);
   GLint status=0;
   glGetProgramiv(pid,GL_LINK_STATUS,&status);
@@ -136,9 +138,8 @@ int bcm_render_init(struct pblrt_video *driver) {
   glUseProgram(DRIVER->program);
   DRIVER->u_screensize=glGetUniformLocation(DRIVER->program,"screensize");
   DRIVER->u_sampler=glGetUniformLocation(DRIVER->program,"sampler");
-  glBindAttribLocation(DRIVER->program,0,"apos");
-  glBindAttribLocation(DRIVER->program,1,"atexcoord");
 
+  glActiveTexture(GL_TEXTURE0);
   glGenTextures(1,&DRIVER->texid);
   if (!DRIVER->texid) {
     glGenTextures(1,&DRIVER->texid);
@@ -149,7 +150,9 @@ int bcm_render_init(struct pblrt_video *driver) {
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-  
+
+  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
   return 0;
 }
 
@@ -202,16 +205,16 @@ static void bcm_render_calculate_bounds(struct pblrt_video *driver,int fbw,int f
 
 /* Draw frame.
  */
- 
-int bcm_render_commit(struct pblrt_video *driver,const void *fb,int fbw,int fbh) {
-  if ((fbw<1)||(fbw>XEGL_FRAMEBUFFER_SIZE_LIMIT)) return -1;
-  if ((fbh<1)||(fbh>XEGL_FRAMEBUFFER_SIZE_LIMIT)) return -1;
+
+int bcm_render_commit_framebuffer(struct pblrt_video *driver,const void *fb,int fbw,int fbh) {
+  if ((fbw<1)||(fbw>BCM_FRAMEBUFFER_SIZE_LIMIT)) return -1;
+  if ((fbh<1)||(fbh>BCM_FRAMEBUFFER_SIZE_LIMIT)) return -1;
   
   glViewport(0,0,driver->w,driver->h);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,DRIVER->texid);
   glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,fbw,fbh,0,GL_RGBA,GL_UNSIGNED_BYTE,fb);
-  
+
   if ((driver->w!=DRIVER->dstww)||(driver->h!=DRIVER->dstwh)||(fbw!=DRIVER->dstfw)||(fbh!=DRIVER->dstfh)) {
     bcm_render_calculate_bounds(driver,fbw,fbh);
   }
@@ -228,7 +231,7 @@ int bcm_render_commit(struct pblrt_video *driver,const void *fb,int fbw,int fbh)
     {DRIVER->dstx+DRIVER->dstw,DRIVER->dsty+DRIVER->dsth,1.0f,0.0f},
   };
   glUseProgram(DRIVER->program);
-  glUniform2f(DRIVER->u_screensize,driver->w,driver->h);
+  glUniform2f(DRIVER->u_screensize,(GLfloat)driver->w,(GLfloat)driver->h);
   glUniform1i(DRIVER->u_sampler,0);
   glDisable(GL_BLEND);
   glEnableVertexAttribArray(0);
@@ -238,6 +241,6 @@ int bcm_render_commit(struct pblrt_video *driver,const void *fb,int fbw,int fbh)
   glDrawArrays(GL_TRIANGLE_STRIP,0,4);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
-  
+
   return 0;
 }

@@ -24,14 +24,16 @@ static int _bcm_init(struct pblrt_video *driver,const struct pblrt_video_setup *
   graphics_get_display_size(0,&screenw,&screenh);
   if ((screenw<1)||(screenh<1)) return -1;
   if ((screenw>4096)||(screenh>4096)) return -1;
-  driver->w=screenw-80;
-  driver->h=screenh-50;
+  driver->w=screenw;
+  driver->h=screenh;
 
   if (!(DRIVER->vcdisplay=vc_dispmanx_display_open(0))) return -1;
   if (!(DRIVER->vcupdate=vc_dispmanx_update_start(0))) return -1;
 
-  VC_RECT_T srcr={0,0,driver->w<<16,driver->h<<16};
-  VC_RECT_T dstr={(screenw>>1)-(driver->w>>1),(screenh>>1)-(driver->h>>1),driver->w,driver->h};
+  int logw=screenw-80;
+  int logh=screenh-50;
+  VC_RECT_T srcr={0,0,screenw<<16,screenh<<16};
+  VC_RECT_T dstr={(screenw>>1)-(logw>>1),(screenh>>1)-(logh>>1),logw,logh};
 
   VC_DISPMANX_ALPHA_T alpha={DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS,0xffffffff};
   if (!(DRIVER->vcelement=vc_dispmanx_element_add(
