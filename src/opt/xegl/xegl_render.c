@@ -90,6 +90,8 @@ static int xegl_render_program_init(
   if (!pid) return 0;
   if (xegl_render_program_compile(driver,pid,GL_VERTEX_SHADER,vsrc,vsrcc)<0) return 0;
   if (xegl_render_program_compile(driver,pid,GL_FRAGMENT_SHADER,fsrc,fsrcc)<0) return 0;
+  glBindAttribLocation(pid,0,"apos");
+  glBindAttribLocation(pid,1,"atexcoord");
   glLinkProgram(pid);
   GLint status=0;
   glGetProgramiv(pid,GL_LINK_STATUS,&status);
@@ -136,8 +138,6 @@ int xegl_render_init(struct pblrt_video *driver) {
   glUseProgram(DRIVER->program);
   DRIVER->u_screensize=glGetUniformLocation(DRIVER->program,"screensize");
   DRIVER->u_sampler=glGetUniformLocation(DRIVER->program,"sampler");
-  glBindAttribLocation(DRIVER->program,0,"apos");
-  glBindAttribLocation(DRIVER->program,1,"atexcoord");
 
   glGenTextures(1,&DRIVER->texid);
   if (!DRIVER->texid) {

@@ -12,8 +12,8 @@ extern const struct pblrt_video_type pblrt_video_type_mswm;//TODO
 extern const struct pblrt_video_type pblrt_video_type_macwm;//TODO
 extern const struct pblrt_audio_type pblrt_audio_type_dummy;
 extern const struct pblrt_audio_type pblrt_audio_type_alsafd;
-extern const struct pblrt_audio_type pblrt_audio_type_asound;//TODO
-extern const struct pblrt_audio_type pblrt_audio_type_pulse;//TODO
+extern const struct pblrt_audio_type pblrt_audio_type_asound;
+extern const struct pblrt_audio_type pblrt_audio_type_pulse;
 extern const struct pblrt_audio_type pblrt_audio_type_msaudio;//TODO
 extern const struct pblrt_audio_type pblrt_audio_type_macaudio;//TODO
 extern const struct pblrt_input_type pblrt_input_type_dummy;
@@ -39,6 +39,12 @@ static const struct pblrt_video_type *pblrt_video_typev[]={
 };
 
 static const struct pblrt_audio_type *pblrt_audio_typev[]={
+#if USE_pulse
+  &pblrt_audio_type_pulse,
+#endif
+#if USE_asound
+  &pblrt_audio_type_asound,
+#endif
 #if USE_alsafd
   &pblrt_audio_type_alsafd,
 #endif

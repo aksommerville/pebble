@@ -91,6 +91,8 @@ static int drmgx_render_program_init(
   if (!pid) return 0;
   if (drmgx_render_program_compile(driver,pid,GL_VERTEX_SHADER,vsrc,vsrcc)<0) return 0;
   if (drmgx_render_program_compile(driver,pid,GL_FRAGMENT_SHADER,fsrc,fsrcc)<0) return 0;
+  glBindAttribLocation(pid,0,"apos");
+  glBindAttribLocation(pid,1,"atexcoord");
   glLinkProgram(pid);
   GLint status=0;
   glGetProgramiv(pid,GL_LINK_STATUS,&status);
@@ -137,8 +139,6 @@ int drmgx_render_init(struct pblrt_video *driver) {
   glUseProgram(DRIVER->program);
   DRIVER->u_screensize=glGetUniformLocation(DRIVER->program,"screensize");
   DRIVER->u_sampler=glGetUniformLocation(DRIVER->program,"sampler");
-  glBindAttribLocation(DRIVER->program,0,"apos");
-  glBindAttribLocation(DRIVER->program,1,"atexcoord");
 
   glGenTextures(1,&DRIVER->texid);
   if (!DRIVER->texid) {
@@ -217,7 +217,7 @@ int drmgx_render_commit(struct pblrt_video *driver,const void *fb,int fbw,int fb
     drmgx_render_calculate_bounds(driver,fbw,fbh);
   }
   
-  if (1||(DRIVER->dstw<driver->w)||(DRIVER->dsth<driver->h)) {
+  if ((DRIVER->dstw<driver->w)||(DRIVER->dsth<driver->h)) {
     glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
   }

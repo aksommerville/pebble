@@ -44,3 +44,4 @@ linux_OBJCOPY:=objcopy
 # You don't need all of these, but should pick at least one each of input, audio, and video.
 # "xinerama" is a fake unit that enables the Xinerama X11 extension, improves monitor size detection.
 linux_OPT_ENABLE:=evdev alsafd asound pulse bcm drmgx glx xegl xinerama
+linux_RUN_ARGS:=

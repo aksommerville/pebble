@@ -118,7 +118,7 @@ $(linux_DEMO_TRUE_RECOMP):$(linux_LIB_TRUE) $(demo_ROM) $(pbltool_EXE);$(PRECMD)
 endif
 
 ifneq (,$(WAMR_SDK))
-linux-run:$(linux_EXE_PEBBLE) $(demo_ROM);$(linux_EXE_PEBBLE) $(demo_ROM)
+linux-run:$(linux_EXE_PEBBLE) $(demo_ROM);$(linux_EXE_PEBBLE) $(demo_ROM) $(linux_RUN_ARGS)
 else
-linux-run:$(linux_DEMO_TRUE);$(linux_DEMO_TRUE)
+linux-run:$(linux_DEMO_TRUE);$(linux_DEMO_TRUE) $(linux_RUN_ARGS)
 endif
