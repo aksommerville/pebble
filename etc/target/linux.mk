@@ -100,15 +100,17 @@ $(linux_DEMO_FAKE):$(linux_LIB_FAKE) $(demo_ROM) $(pbltool_EXE);$(PRECMD) $(pblt
 endif
 
 # demo-true: Compile the game's code for Linux, and bundle as the real thing. No WebAssembly required.
-linux_DEMO_TRUE:=$(linux_OUTDIR)/demo-true
-linux-all:$(linux_DEMO_TRUE)
-linux_DEMO_TRUE_CFILES:=$(filter-out src/demo/src/stdlib/%,$(filter src/demo/src/%.c,$(SRCFILES)))
-linux_DEMO_TRUE_OFILES:=$(patsubst src/%.c,$(linux_MIDDIR)/%.o,$(linux_DEMO_TRUE_CFILES))
--include $(linux_DEMO_TRUE_OFILES:.o=.d)
-$(linux_MIDDIR)/demo/%.o:src/demo/%.c;$(PRECMD) $(linux_CC) -Isrc/demo/src -o$@ $< -DUSE_REAL_STDLIB=1
-linux_DEMO_TRUE_LIB:=$(linux_MIDDIR)/libdemotrue.a
-$(linux_DEMO_TRUE_LIB):$(linux_DEMO_TRUE_OFILES);$(PRECMD) $(linux_AR) rc $@ $^
-$(linux_DEMO_TRUE):$(linux_LIB_TRUE) $(linux_DEMO_TRUE_LIB) $(demo_ROM) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) bundle -o$@ $(demo_ROM) $(linux_DEMO_TRUE_LIB)
+ifneq (,$(demo_ROM))
+  linux_DEMO_TRUE:=$(linux_OUTDIR)/demo-true
+  linux-all:$(linux_DEMO_TRUE)
+  linux_DEMO_TRUE_CFILES:=$(filter-out src/demo/src/stdlib/%,$(filter src/demo/src/%.c,$(SRCFILES)))
+  linux_DEMO_TRUE_OFILES:=$(patsubst src/%.c,$(linux_MIDDIR)/%.o,$(linux_DEMO_TRUE_CFILES))
+  -include $(linux_DEMO_TRUE_OFILES:.o=.d)
+  $(linux_MIDDIR)/demo/%.o:src/demo/%.c;$(PRECMD) $(linux_CC) -Isrc/demo/src -o$@ $< -DUSE_REAL_STDLIB=1
+  linux_DEMO_TRUE_LIB:=$(linux_MIDDIR)/libdemotrue.a
+  $(linux_DEMO_TRUE_LIB):$(linux_DEMO_TRUE_OFILES);$(PRECMD) $(linux_AR) rc $@ $^
+  $(linux_DEMO_TRUE):$(linux_LIB_TRUE) $(linux_DEMO_TRUE_LIB) $(demo_ROM) $(pbltool_EXE);$(PRECMD) $(pbltool_EXE) bundle -o$@ $(demo_ROM) $(linux_DEMO_TRUE_LIB)
+endif
 
 # demo-true-recomp: A simpler alternative for DEMO_TRUE, but I'm not sure we'll be able to pull it off:
 linux_DEMO_TRUE_RECOMP:=$(linux_OUTDIR)/demo-true-recomp
