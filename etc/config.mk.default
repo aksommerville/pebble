@@ -24,7 +24,7 @@ all:$(addsuffix -all,$(TARGETS))
 # Most of these will be massaged or defaulted by the target; see etc/target/*.mk for details.
 
 pbltool_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
-pbltool_LD:=gcc
+pbltool_LD:=gcc -z noexecstack
 pbltool_LDPOST:=-lm -lz
 pbltool_OPT_ENABLE:=
 
@@ -37,7 +37,7 @@ demo_CC_NATIVE:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
 demo_AR_NATIVE:=ar
 
 linux_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
-linux_LD:=gcc
+linux_LD:=gcc -z noexecstack
 linux_LDPOST:=-lm -lz
 linux_AR:=ar
 linux_OBJCOPY:=objcopy
