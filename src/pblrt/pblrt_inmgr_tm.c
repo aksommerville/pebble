@@ -69,7 +69,7 @@ static int pblrt_inmgr_guess_btnid(int btnid,int hidusage,int lo,int hi,int rest
     case 0x00010124: return PBL_BTN_L1;
     case 0x00010125: return PBL_BTN_R1;
     case 0x00010129: return PBL_BTN_AUX1;
-    case 0x0001012b: return PBL_BTN_AUX3; // rp
+    case 0x0001012b: return PBLRT_SIGNAL_QUIT; // rp
   }
   
   // If we got a sensible (hidusage) and it agrees with the range, great.
