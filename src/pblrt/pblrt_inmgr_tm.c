@@ -53,11 +53,24 @@ static int pblrt_inmgr_tm_least_popular_bit(const struct pblrt_inmgr_tm *tm,int 
 /* Choose a button ID, when the driver didn't express a preference.
  */
  
-static int pblrt_inmgr_guess_btnid(int hidusage,int lo,int hi,int rest,const struct pblrt_inmgr_tm *tm) {
+static int pblrt_inmgr_guess_btnid(int btnid,int hidusage,int lo,int hi,int rest,const struct pblrt_inmgr_tm *tm) {
   int range=hi-lo+1;
   if (range<2) return 0;
   
   //TODO Ought to add special logic for keyboards, they might come in thru the generic bus.
+  
+  /* 2025-05-16: Hacking in some static maps for provisioning contop.
+   */
+  if ((tm->vid==0x0e8f)&&(tm->pid==0x0003)) switch (btnid) { // El Cheapo.
+    case 0x00010120: return PBL_BTN_NORTH;
+    case 0x00010121: return PBL_BTN_EAST;
+    case 0x00010122: return PBL_BTN_SOUTH;
+    case 0x00010123: return PBL_BTN_WEST;
+    case 0x00010124: return PBL_BTN_L1;
+    case 0x00010125: return PBL_BTN_R1;
+    case 0x00010129: return PBL_BTN_AUX1;
+    case 0x0001012b: return PBL_BTN_AUX3; // rp
+  }
   
   // If we got a sensible (hidusage) and it agrees with the range, great.
   switch (hidusage) {
@@ -132,7 +145,7 @@ static int pblrt_button_map_valid(int btnid,int lo,int hi,int rest) {
 static int pblrt_inmgr_tm_synthesize_cb(int btnid,int pblbtnid,int hidusage,int lo,int hi,int rest,void *userdata) {
   struct pblrt_inmgr_tm *tm=userdata;
   if (!pblbtnid) {
-    if (!(pblbtnid=pblrt_inmgr_guess_btnid(hidusage,lo,hi,rest,tm))) return 0;
+    if (!(pblbtnid=pblrt_inmgr_guess_btnid(btnid,hidusage,lo,hi,rest,tm))) return 0;
   }
   if (!pblrt_button_map_valid(pblbtnid,lo,hi,rest)) return 0;
   struct pblrt_inmgr_tm_button *button=pblrt_inmgr_tm_add_button(tm,btnid,pblbtnid);
